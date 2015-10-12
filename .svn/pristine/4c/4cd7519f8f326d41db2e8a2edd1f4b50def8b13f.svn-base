@@ -1,0 +1,689 @@
+package com.uninet.xiaoyou.net;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.ConnectException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import jcifs.util.Base64;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.wifi.WifiManager;
+import android.os.Handler;
+import android.os.Message;
+import android.text.format.Formatter;
+import android.util.Log;
+import android.widget.Toast;
+
+import com.uninet.xiaoyou.FunctionSelectionActivity;
+import com.uninet.xiaoyou.R;
+import com.uninet.xiaoyou.ShowProgressDialog;
+import com.uninet.xiaoyou.Utility;
+import com.uninet.xiaoyou.remote;
+import com.uninet.xiaoyou.routemanager.MyAsyncTask;
+
+/**
+ * 网络交互操作
+ * 
+ * @author chenggong
+ * 
+ */
+@SuppressLint("ShowToast")
+public class DataInteractionThread extends Thread {
+	private HttpURLConnection conn;
+	private static ParseJSONMessage getmsg = null;
+	static JSONObject postmsg = new JSONObject();
+	static String path;
+	// 是否需要鉴权
+	static boolean isWithAuthorization = false;
+	// 是否是post消息
+	static boolean ispost = false;
+
+	private Context mContext;
+	// 具体操作内容
+	private int whitch;
+	// 鉴权信息
+	private String username = "admin";
+	private String password;
+	private boolean isServer = false;
+	// TODO 错误信息
+	private static String error = "error message";
+	private String pppoe_name, pppoe_pwd;
+
+	private String apcli_ssid, apcli_bssid, apcli_mode, apcli_enc,
+			apcli_wpapsk, apcli_channel;
+
+	private String mssid_0, security_mode, passphrase;
+	private String result = "-1";
+
+	private String usb_mode;
+
+	private String remote_id, remote_data;
+
+	static private final int connect_error = 99;
+
+	// 获取相应信息后通知界面刷新
+	@SuppressLint("HandlerLeak")
+	Handler handler = new Handler() {
+		@SuppressLint("ShowToast")
+		@Override
+		public void handleMessage(Message msg) {
+			ShowProgressDialog.dismiss();
+			MyAsyncTask.dialogcancel();
+
+			if (msg.what == connect_error) {
+				Toast.makeText(mContext,
+						R.string.connect_error, 0).show();
+				return;
+			}
+
+			if (isServer) {
+				Log.d(Utility.TAG, "get_result : " + get_result());
+				if (get_result().equals("0")) {
+					Toast.makeText(mContext, mContext.getString(R.string.server_ok), 0).show();
+					mContext.startActivity(new Intent(mContext,
+							FunctionSelectionActivity.class));
+				} else {
+					Toast.makeText(mContext, mContext.getString(R.string.server_failed) + " " + get_result(), 0)
+							.show();
+				}
+
+			} else {
+				if (msg.what == Utility.device_pair) {
+					remote.setPairResult(get_pair_id());
+				} else if (msg.what == Utility.login) {
+					if (get_result().equals("0")) {
+						Toast.makeText(mContext, mContext.getString(R.string.server_ok), 0).show();
+						mContext.startActivity(new Intent(mContext,
+								FunctionSelectionActivity.class));
+					} else {
+						Toast.makeText(mContext,
+								mContext.getString(R.string.server_failed)  + " " + get_result(), 0).show();
+					}
+				} else if (msg.what == Utility.get_wifista_list) {
+					Log.d(Utility.TAG, "get wifista list");
+				} else {
+					if (get_result().equals("0")) {
+						Toast.makeText(mContext, mContext.getString(R.string.server_ok) , 0).show();
+					} else {
+						Toast.makeText(mContext, mContext.getString(R.string.server_failed) + " " + get_result(), 0)
+								.show();
+					}
+
+				}
+			}
+			super.handleMessage(msg);
+		}
+	};
+
+	private String version_out = null;
+
+	/**
+	 * 空构造方法,便于调用查询方法
+	 * 
+	 * @param _context
+	 */
+	public DataInteractionThread() {
+	}
+
+	/**
+	 * 构造方法,用于与远程进行交互
+	 * 
+	 * @param _context
+	 */
+	public DataInteractionThread(Context _context, int _whitch, boolean where) {
+		mContext = _context;
+		whitch = _whitch;
+		isServer = where;
+
+		SharedPreferences sp = mContext.getSharedPreferences(
+				"saved_login_settings", 0);
+		password = sp.getString("password", "password");
+
+	}
+
+	/**
+	 * 获取当前连接的网关IP
+	 * 
+	 * @return
+	 */
+	@SuppressWarnings("deprecation")
+	private String getGateWay() {
+
+		WifiManager wm = (WifiManager) mContext
+				.getSystemService(Context.WIFI_SERVICE);
+		String getway = Formatter.formatIpAddress(wm.getDhcpInfo().gateway);
+
+		return getway;
+	}
+
+	/**
+	 * 开启远程连接，连接当前网关，发送消息
+	 * 
+	 * @param isWithAuthorization
+	 *            是否需要鉴权
+	 * @param ispost
+	 *            是否是post消息
+	 * @return boolean
+	 */
+	private boolean connect() {
+		URL url;
+		getmsg = null;
+		try {
+			if (isServer) {
+				url = new URL("http://27.115.113.62:8080/uninet" + path);
+				Log.d(Utility.TAG, "url : " + url);
+			} else {
+				url = new URL("http://" + getGateWay() + path);
+			}
+			conn = (HttpURLConnection) url.openConnection();
+			conn.setConnectTimeout(5000);
+			if (isWithAuthorization) {
+				conn.setDoInput(true);
+				conn.setAllowUserInteraction(true);
+				conn.setRequestProperty(
+						"Authorization",
+						"Basic "
+								+ Base64.encode((username + ":" + password)
+										.getBytes()));
+			}
+			if (ispost) {
+				conn.setConnectTimeout(60000);
+				conn.setDoOutput(true);
+				conn.setRequestMethod("POST");
+
+				DataOutputStream out = new DataOutputStream(
+						conn.getOutputStream());
+				Log.d(Utility.TAG, "postmsg : " + postmsg);
+				Log.d("abc", "postmsg =  " + postmsg);
+				out.write(postmsg.toString().getBytes());
+				out.flush();
+				out.close();
+			}
+			Log.d(Utility.TAG, "before connect : " + conn.getURL().toString());
+			conn.connect();
+			Log.d(Utility.TAG, "getResponseCode : " + conn.getResponseCode());
+			if (conn.getResponseCode() != 200) {
+				handler.sendEmptyMessage(connect_error);
+				return false;
+			}
+			getInfo();
+			return false;
+		} catch (ConnectException e) {
+			Log.d(Utility.TAG, "ConnectException");
+			handler.sendEmptyMessage(connect_error);
+		} catch (MalformedURLException e) {
+			Log.d(Utility.TAG, "MalformedURLException");
+			e.printStackTrace();
+		} catch (IOException e) {
+			Log.d(Utility.TAG, "IOException");
+			e.printStackTrace();
+		}
+		conn.disconnect();
+		handler.sendEmptyMessage(connect_error);
+		return false;
+	}
+
+	/**
+	 * 获取远程返回
+	 */
+	private void getInfo() {
+		try {
+			// if (ispost) {
+			//
+			// }
+			DataInputStream in = new DataInputStream(conn.getInputStream());
+			getmsg = new ParseJSONMessage(in);
+			conn.disconnect();
+			in.close();
+			handler.sendEmptyMessage(whitch);
+			return;
+		} catch (MalformedURLException e) {
+			Log.d(Utility.TAG, "MalformedURLException");
+		} catch (IOException e) {
+			e.printStackTrace();
+			// Log.d(Utility.TAG, "IOException");
+		}
+		conn.disconnect();
+		handler.sendEmptyMessage(connect_error);
+	}
+
+	/**
+	 * 获取远程返回的结果
+	 * 
+	 * @return String 0：success 1：鉴权失败 2：功能不支持 3：未知错误
+	 */
+	public String get_result() {
+		if (getmsg != null) {
+			try {
+				result = getmsg.getJSONValue("result");
+				Log.d(Utility.TAG, "'get_result, result = " + result);//
+//						+ ", getmsg = " + getmsg.getJSONObject().toString());
+			} catch (JSONException e) {
+				Toast.makeText(mContext, R.string.json_error, 0);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * 获取百度云开启状态
+	 * 
+	 * @return String
+	 */
+	public String get_baiducloud_opened() {
+		if (get_result().equals("0")) {
+			try {
+				return getmsg.getJSONValue("baiducloud_opened");
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		return error;
+	}
+
+	/**
+	 * 获取百度云用户名
+	 * 
+	 * @return String
+	 */
+	public String get_baiducloud_username() {
+		if (get_result().equals("0")) {
+			try {
+				return getmsg.getJSONValue("baiducloud_username");
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		return error;
+	}
+
+	/**
+	 * 获取百度云密码
+	 * 
+	 * @return String
+	 */
+	public String get_baiducloud_password() {
+		if (get_result().equals("0")) {
+			try {
+				return getmsg.getJSONValue("baiducloud_password");
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		return error;
+	}
+
+	/**
+	 * 获取USB模式
+	 * 
+	 * @return String
+	 */
+	public String get_usb_mode() {
+		Log.d(Utility.TAG, "get_usb_mode result : " + get_result());
+		if (get_result().equals("0")) {
+			try {
+				return getmsg.getJSONValue("usb_mode");
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		return error;
+	}
+
+	/**
+	 * 获取wifi ssid
+	 * 
+	 * @return String
+	 */
+	public String get_ssid() {
+		if (get_result().equals("0")) {
+			try {
+				return getmsg.getJSONValue("mssid_0");
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		return error;
+	}
+
+	/**
+	 * 设置wifi ssid
+	 * 
+	 * @return String
+	 */
+	public void set_ssid(String _mssid_0, String _security_mode,
+			String _passphrase) {
+		mssid_0 = _mssid_0;
+		security_mode = _security_mode;
+		passphrase = _passphrase;
+	}
+
+	/**
+	 * 获取wifi密码类型
+	 * 
+	 * @return String
+	 */
+	public String get_type() {
+		if (get_result().equals("0")) {
+			try {
+				Log.d(Utility.TAG, "'get_type, result = " + result
+						+ ", getmsg = " + getmsg.getJSONObject().toString());
+				return getmsg.getJSONValue("security_mode");
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		return error;
+	}
+
+	/**
+	 * 获取wifi密码
+	 * 
+	 * @return String
+	 */
+	public String get_password() {
+		if (get_result().equals("0")) {
+			try {
+				return getmsg.getJSONValue("passphrase");
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		return error;
+	}
+
+	/**
+	 * 获取wifi穿墙模式
+	 * 
+	 * @return String
+	 */
+	public String get_wifi_power() {
+		if (get_result().equals("0")) {
+			try {
+				return getmsg.getJSONValue("wifi_power");
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		return error;
+	}
+
+	/**
+	 * 获取wifi工作模式
+	 * 
+	 * @return String
+	 */
+	public String get_wifi_mode() {
+		if (get_result().equals("0")) {
+			try {
+				return getmsg.getJSONValue("wifi_mode");
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		return error;
+	}
+
+	/**
+	 * 获取外部版本号
+	 * 
+	 * @return String
+	 */
+	public String get_version_out() {
+		if (version_out != null) {
+			return version_out;
+		}
+		if (get_result().equals("0")) {
+			try {
+				return getmsg.getJSONValue("version_out");
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		return error;
+	}
+
+	/**
+	 * 获取内部版本号
+	 * 
+	 * @return String
+	 */
+	public String get_version_in() {
+		if (get_result().equals("0")) {
+			try {
+				return getmsg.getJSONValue("version_in");
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		return error;
+	}
+
+	/**
+	 * 获取项目信息
+	 * 
+	 * @return String
+	 */
+	public String get_product() {
+		if (get_result().equals("0")) {
+			try {
+				return getmsg.getJSONValue("product");
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		return error;
+	}
+
+	/**
+	 * 获取name
+	 * 
+	 * @return String
+	 */
+	public String get_name() {
+		if (get_result().equals("0")) {
+			try {
+				return getmsg.getJSONValue("name");
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		return error;
+	}
+
+	/**
+	 * 获取pppoe密码
+	 */
+	public String get_pppoe_pwd() {
+		if (get_result().equals("0")) {
+			try {
+				return getmsg.getJSONValue("pppoePass");
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		return error;
+	}
+
+	/**
+	 * 获取pppoe用户名
+	 */
+	public String get_pppoe_uname() {
+		if (get_result().equals("0")) {
+			try {
+				return getmsg.getJSONValue("pppoeUser");
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		return error;
+	}
+
+	/**
+	 * 设置pppoe用户名密码
+	 */
+	public void set_pppoe_info(String name, String pwd) {
+		pppoe_name = name;
+		pppoe_pwd = pwd;
+	}
+
+	/**
+	 * 获取wifi ssid
+	 */
+	public String get_wifista_ssid() {
+		if (get_result().equals("0")) {
+			try {
+				return getmsg.getJSONValue("apcli_ssid");
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		return error;
+	}
+
+	/**
+	 * 设置wifi sta信息
+	 */
+	public void set_wifista_info(String _apcli_ssid, String _apcli_wpapsk) {
+		apcli_ssid = _apcli_ssid;
+		apcli_wpapsk = _apcli_wpapsk;
+	}
+
+	/**
+	 * 获取ap列表
+	 */
+	public String[] get_wifista_list() {
+		String[] error = { "error" };
+		try {
+
+			JSONObject object = getmsg.getJSONObject();
+			JSONArray arrary = object.names();
+			if (arrary.length() < 2) {
+				return error;
+			}
+			String[] list = new String[arrary.length()];
+			for (int i = 0; i < arrary.length(); i++) {
+				list[i] = arrary.getString(i);
+			}
+			return list;
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		return error;
+	}
+
+	/**
+	 * 设置USB模式
+	 */
+	public void set_usb_mode(String mode) {
+		usb_mode = mode;
+	}
+
+	/**
+	 * 获取配对结果
+	 */
+	public String get_pair_id() {
+		if (get_result().equals("0")) {
+			try {
+				return getmsg.getJSONValue("device_result");
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		return error;
+	}
+	
+	public void set_remote_value(String id, String data) {
+		remote_id = id;
+		remote_data = data;
+	}
+
+	@Override
+	public void run() {
+		result = "-1";
+		Log.d(Utility.TAG, "whitch : " + whitch);
+		if (isServer) {
+			switch (whitch) {
+			case Utility.login:
+				GetFromRemote.server_login();
+				break;
+			case Utility.register:
+				PostToRemote.server_regist(username, password);
+				break;
+			case Utility.update_pword:
+				PostToRemote.server_update_password("");
+				break;
+			}
+			connect();
+			getInfo();
+			Message msg = new Message();
+			msg.what = whitch;
+			handler.sendMessage(msg);
+		} else {
+			switch (whitch) {
+			case Utility.login:
+				GetFromRemote.login();
+				break;
+			case Utility.get_pppoe_info:
+				GetFromRemote.wanGetPPPOEInfo();
+				break;
+			case Utility.switch_to_pppoe:
+				PostToRemote.wanSwitchToPPPOE(pppoe_name, pppoe_pwd);
+				break;
+			case Utility.get_wifista_info:
+				GetFromRemote.wanGetWifiSta();
+				break;
+			case Utility.switch_to_wifista:
+				PostToRemote.wanSwitchToWifiSta(apcli_ssid, apcli_bssid,
+						apcli_mode, apcli_enc, apcli_wpapsk, apcli_channel);
+				break;
+			case Utility.get_wifista_list:
+				GetFromRemote.wanGetWifiStaSearchInfo();
+				break;
+			case Utility.get_ssid_info:
+				GetFromRemote.getSsid();
+				break;
+			case Utility.set_ssid_info:
+				PostToRemote.wifiSetSSIDInfo(mssid_0, security_mode, password);
+				break;
+			case Utility.set_usb_mode:
+				PostToRemote.setUsbmode(usb_mode);
+				break;
+			case Utility.get_usb_mode:
+				GetFromRemote.getUsbmode();
+				break;
+			case Utility.device_pair:
+				GetFromRemote.devicePair();
+				break;
+			case Utility.device_query:
+				PostToRemote.deviceQuery(remote_id);
+				break;
+			case Utility.device_open:
+				PostToRemote.deviceOpen(remote_id);
+				break;
+			case Utility.device_close:
+				PostToRemote.deviceClose(remote_id);
+				break;
+			case Utility.device_control:
+				PostToRemote.deviceControl(remote_id, remote_data);
+				break;
+			default:
+				break;
+			}
+			connect();
+		}
+	}
+
+
+}

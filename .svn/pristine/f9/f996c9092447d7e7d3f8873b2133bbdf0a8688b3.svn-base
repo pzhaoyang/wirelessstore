@@ -1,0 +1,169 @@
+package com.uninet.xiaoyou.routemanager;
+
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.text.method.HideReturnsTransformationMethod;
+import android.text.method.PasswordTransformationMethod;
+import android.util.Log;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.EditText;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.uninet.xiaoyou.R;
+import com.uninet.xiaoyou.Utility;
+import com.uninet.xiaoyou.net.DataInteractionThread;
+import com.uninet.xiaoyou.wirelessstore.SmbListActivity;
+
+public class WirelessSettingsActivity extends Activity implements
+		OnCheckedChangeListener, OnClickListener,
+		android.widget.RadioGroup.OnCheckedChangeListener {
+
+	TextView password;
+	RadioButton no_pwd, strong_pwd;
+	EditText input_password, show_ssid;
+	CheckBox showpassword;
+	DataInteractionThread dt;
+	Button save, back;
+	RadioGroup radiogroup;
+
+	String security_mode;
+	String result;
+
+	private BroadcastReceiver myBroadcastReceiver = new BroadcastReceiver() {
+
+		@Override
+		public void onReceive(Context context, Intent i) {
+			result = i.getStringExtra("result");
+			refresh();
+		}
+	};
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		this.setTitle(R.string.network_info);
+		setContentView(R.layout.activity_wirelesssettings);
+
+		show_ssid = (EditText) findViewById(R.id.show_ssid);
+		password = (TextView) findViewById(R.id.password);
+		radiogroup = (RadioGroup) findViewById(R.id.radiogroup);
+		no_pwd = (RadioButton) findViewById(R.id.no_pwd);
+		strong_pwd = (RadioButton) findViewById(R.id.strong_pwd);
+		input_password = (EditText) findViewById(R.id.input_password);
+		showpassword = (CheckBox) findViewById(R.id.showpassword);
+		save = (Button) findViewById(R.id.save);
+		back = (Button) findViewById(R.id.back);
+
+		radiogroup.setOnCheckedChangeListener(this);
+
+		// no_pwd.setOnCheckedChangeListener(this);
+		// strong_pwd.setOnCheckedChangeListener(this);
+		showpassword.setOnCheckedChangeListener(this);
+
+		save.setOnClickListener(this);
+		back.setOnClickListener(this);
+	}
+
+	@Override
+	protected void onResume() {
+		dt = new DataInteractionThread(this, Utility.get_ssid_info, "admin",
+				"admin", false);
+		MyAsyncTask loading = new MyAsyncTask(this, dt);
+		loading.execute("");
+
+		IntentFilter intentFilter = new IntentFilter("DT_REAULT");
+		registerReceiver(myBroadcastReceiver, intentFilter);
+
+		super.onResume();
+	}
+
+	@Override
+	public void onCheckedChanged(CompoundButton button, boolean ischecked) {
+		switch (button.getId()) {
+		case R.id.showpassword:
+			Log.d(Utility.TAG, "showpassword ischecked");
+			if (ischecked) {
+				input_password
+						.setTransformationMethod(HideReturnsTransformationMethod
+								.getInstance());
+			} else {
+				input_password
+						.setTransformationMethod(PasswordTransformationMethod
+								.getInstance());
+			}
+		}
+
+	}
+
+	@Override
+	public void onClick(View v) {
+		switch (v.getId()) {
+		case R.id.save:
+			dt = new DataInteractionThread(this, Utility.set_ssid_info,
+					"admin", "admin", false);
+			dt.set_ssid(show_ssid.getText().toString(), security_mode,
+					input_password.getText().toString());
+			MyAsyncTask loading = new MyAsyncTask(this, dt);
+			loading.execute("");
+			break;
+		case R.id.back:
+			startActivity(new Intent(this, RouteManagerActivity.class));
+			break;
+		}
+	}
+
+	@Override
+	public void onCheckedChanged(RadioGroup group, int which) {
+		switch (group.getCheckedRadioButtonId()) {
+		case R.id.no_pwd:
+			if (no_pwd.isChecked()) {
+				password.setVisibility(View.GONE);
+				input_password.setVisibility(View.GONE);
+				showpassword.setVisibility(View.GONE);
+
+				security_mode = "Disable";
+				input_password.setText("");
+			}
+		case R.id.strong_pwd:
+			if (strong_pwd.isChecked()) {
+				password.setVisibility(View.VISIBLE);
+				input_password.setVisibility(View.VISIBLE);
+				showpassword.setVisibility(View.VISIBLE);
+
+				security_mode = "WPAPSKWPA2PSK";
+			}
+		}
+	}
+
+	@SuppressLint("ShowToast")
+	private void refresh() {
+		Log.d(Utility.TAG, "refresh, type = " + dt.get_type());
+		if (result.equals("0")) {
+			show_ssid.setText(dt.get_ssid());
+			if (dt.get_type().equals("Disable")) {
+				Log.d(Utility.TAG, "Disable");
+				no_pwd.setChecked(true);
+			} else if (dt.get_type().equals("WPAPSKWPA2PSK")) {
+				Log.d(Utility.TAG, "WPAPSKWPA2PSK");
+				strong_pwd.setChecked(true);
+			}
+		} else {
+			Toast.makeText(this, R.string.error, 0);
+		}
+	}
+}

@@ -1,0 +1,90 @@
+package com.uninet.xiaoyou.net;
+
+import java.io.IOException;
+import java.io.InputStream;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import android.util.Log;
+
+import com.uninet.xiaoyou.Utility;
+
+/**
+ * 解析JSON数据包工具类
+ * 
+ * @author chenggong
+ * 
+ */
+public class ParseJSONMessage {
+
+	private JSONObject jsonObject;
+
+
+	/**
+	 * 构造方法
+	 * 
+	 * @param _in
+	 */
+	public ParseJSONMessage(InputStream in) {
+		if (Utility.logable)
+			Log.d(Utility.TAG, "ParseJSONMessage");
+		parse(in);
+	}
+
+	private void parse(InputStream in) {
+		try {
+			if (Utility.logable)
+				Log.d(Utility.TAG, "try");
+			int count = in.available();
+			byte[] b = new byte[count];
+			in.read(b);
+			// Log.d(Utility.TAG, "l = " + b.length);
+			// for (int i = 0; i < b.length; i++) {
+			// String hex = Integer.toHexString(b[i] & 0xFF);
+			// if (hex.length() == 1) {
+			// hex = '0' + hex;
+			// }
+			// if (Utility.logable)
+			// Log.d(Utility.TAG, "hex = " + hex);
+			// }
+			String str = new String(b);
+			if (Utility.logable)
+				Log.d(Utility.TAG, "str = " + str);
+			jsonObject = new JSONObject(str);
+			// str.split("");
+			// jsonObject.get(str);
+			// jsonObject.getJSONObject(str);
+			in.close();
+
+			if (Utility.logable)
+				Log.d(Utility.TAG, "jsonObject : " + jsonObject);
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (JSONException e) {
+			int size;
+			try {
+				size = in.available();
+				byte[] buffer = new byte[size];
+				 in.read(buffer);
+				Log.d(Utility.TAG, "" +new String(buffer));
+			} catch (IOException e2) {
+				// TODO Auto-generated catch block
+				e2.printStackTrace();
+			}
+			
+			Log.d(Utility.TAG,"not json");
+		}
+	}
+
+	public String getJSONValue(String key) throws JSONException {
+		if(jsonObject != null && jsonObject.has(key)){
+		return jsonObject.getString(key);
+		}
+		return "error";		
+	}
+	
+	public JSONObject getJSONObject(){
+		return jsonObject;
+	}
+}

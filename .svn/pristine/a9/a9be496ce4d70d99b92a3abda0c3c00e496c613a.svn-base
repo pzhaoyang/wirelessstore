@@ -1,0 +1,47 @@
+package com.uninet.xiaoyou.net;
+
+import java.io.DataInputStream;
+import java.io.IOException;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import android.util.Log;
+
+import com.uninet.xiaoyou.Utility;
+
+/**
+ * 解析JSON数据包工具类
+ * @author chenggong
+ *
+ */
+public class ParseJSONMessage {
+	
+	DataInputStream in;
+	JSONObject jsonObject;
+	
+	/**
+	 * 构造方法
+	 * @param _in
+	 */
+	public ParseJSONMessage(DataInputStream _in) {
+		in = _in;
+		parse();
+	}
+	
+	private void parse(){
+			try {
+				jsonObject.getJSONObject(in.readUTF());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+	}
+	
+	public String getJSONValue(String key) throws JSONException{
+		return jsonObject.getString(key);
+	}
+}

@@ -1,0 +1,767 @@
+package com.uninet.xiaoyou.remotecontrol.remote;
+
+//import java.io.File;
+import java.io.IOException;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+
+
+
+
+import com.uninet.xiaoyou.R;
+
+
+
+import com.uninet.xiaoyou.remotecontrol.data.KeyToRemote;
+import com.uninet.xiaoyou.remotecontrol.data.Value;
+import com.uninet.xiaoyou.remotecontrol.database.IRDataBase;
+import com.uninet.xiaoyou.remotecontrol.ircomm.KeyTreate;
+import com.uninet.xiaoyou.remotecontrol.ircomm.RemoteComm;
+import com.uninet.xiaoyou.remotecontrol.ui.MenuAdapter;
+import com.uninet.xiaoyou.remotecontrol.ui.MenuList;
+import com.uninet.xiaoyou.remotecontrol.ui.widget.UIButton;
+import com.uninet.xiaoyou.remotecontrol.ui.widget.UITableView;
+import com.uninet.xiaoyou.remotecontrol.ui.widget.UIButton.ClickListener;
+import com.uninet.xiaoyou.remotecontrol.utils.MyRemoteDatabase;
+import com.uninet.xiaoyou.remotecontrol.utils.RemoteDB;
+import com.uninet.xiaoyou.remotecontrol.utils.UserDB;
+
+import android.os.Bundle;
+import android.os.Message;
+import android.os.Vibrator;
+
+//import android.os.Environment;
+import android.os.Handler;
+
+import android.annotation.SuppressLint;
+import android.app.AlertDialog;
+
+import android.app.TabActivity;
+
+import android.content.Context;
+
+//import android.content.BroadcastReceiver;
+//import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+
+
+//import android.content.IntentFilter;
+
+import android.util.DisplayMetrics;
+import android.util.Log;
+
+import android.view.GestureDetector;
+import android.view.Gravity;
+import android.view.KeyEvent;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+
+import android.view.GestureDetector.OnGestureListener;
+import android.view.MotionEvent;
+import android.view.View;
+
+import android.view.View.OnTouchListener;
+
+import android.widget.HorizontalScrollView;
+
+
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TabHost.OnTabChangeListener;
+
+import android.widget.ListView;
+import android.widget.RelativeLayout;
+import android.widget.SlidingDrawer;
+
+import android.widget.TabHost;
+import android.widget.TabWidget;
+
+import android.widget.Toast;
+
+@SuppressLint("HandlerLeak")
+public class MainActivity extends TabActivity implements OnTouchListener,
+		OnGestureListener {
+	private static final String TAG = "ET4003_REMOTE_DEMO";
+	private static final int FLING_MIN_DISTANCE = 20;
+	private static final int FLING_MIN_VELOCITY = 0;
+	private static final int STUDY = 1;
+
+	private static Context mContext;
+	private TabHost tabHost;
+	private HorizontalScrollView mHs;
+	private GestureDetector mGestureDetector;
+	private RemoteDB mRmtDB = null;
+	private UserDB mUserDB = null;
+
+	private static KeyTreate mKeyTreate = null;
+	// SelectPicPopupWindow menuWindow;
+	private Vibrator vibrator;
+	private SlidingDrawer sd;
+	// private boolean mIsExit = false;
+	ArrayList<MenuList> menulists;
+	MenuAdapter myListAdapter;
+	ListView listView;
+	UITableView tableView;
+
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_main);
+
+		mGestureDetector = new GestureDetector(this);
+		RelativeLayout line = (RelativeLayout) findViewById(R.id.main_view);
+		line.setOnTouchListener(this);
+		line.setLongClickable(true);
+		mContext = this;
+		Value.mAppContext = getApplicationContext();
+
+		mHs = (HorizontalScrollView) findViewById(R.id.hs);
+		Value.keyRemoteTab = new HashMap<String, String>();
+
+		// listView = (ListView) findViewById(R.id.menu_list);
+		// menulists = new ArrayList<MenuList>();
+		// Resources res = getResources();
+		// Bitmap bmp=BitmapFactory.audiomobiledeResource(res, R.drawable.menu_list);
+		// String str = res.getString(R.string.options);
+		// MenuList ml = new MenuList(bmp,str);
+		// menulists.add(ml);
+		// bmp=BitmapFactory.audiomobiledeResource(res, R.drawable.menu_learn);
+		// str = res.getString(R.string.study);
+		// ml = new MenuList(bmp,str);
+		// menulists.add(ml);
+		// bmp=BitmapFactory.audiomobiledeResource(res, R.drawable.menu_about);
+		// str = res.getString(R.string.about);
+		// ml = new MenuList(bmp,str);
+		// menulists.add(ml);
+		// bmp=BitmapFactory.audiomobiledeResource(res, R.drawable.menu_quit);
+		// str = res.getString(R.string.quit);
+		// ml = new MenuList(bmp,str);
+		// menulists.add(ml);
+		sd = (SlidingDrawer) findViewById(R.id.sliding);
+		Load();
+
+		myListAdapter = new MenuAdapter(this, menulists);
+
+		//
+		// listView.setAdapter(myListAdapter);
+		//
+		// listView.setOnItemClickListener(new OnItemClickListener()
+		// {
+		// @Override
+		// public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
+		// long arg3)
+		// {
+		//
+		//
+		// sd.close();
+		// switch (arg2) {
+		//
+		// case 1:
+		//
+		// mHandler.obtainMessage(R.id.MSG_OPTION_STUDY, 1, -1)
+		// .sendToTarget();
+		//
+		// break;
+		// case 0:
+		// mHandler.obtainMessage(R.id.MSG_OPTION_LIST, 1, -1)
+		// .sendToTarget();
+		// break;
+		// case 2:
+		// mHandler.obtainMessage(R.id.MSG_OPTION_ABOUT, 1, -1)
+		// .sendToTarget();
+		//
+		// break;
+		// case 3:
+		// mHandler.obtainMessage(R.id.MSG_OPTION_QUIT, 1, -1)
+		// .sendToTarget();
+		// break;
+		// default:
+		// break;
+		// }
+		// }
+		// });
+
+		// tableView = (UITableView) findViewById(R.id.tableView);
+		// createList();
+		// tableView.commit();
+		UIButton optionsButton = (UIButton) findViewById(R.id.menu_options);
+		UIButton studyButton = (UIButton) findViewById(R.id.menu_study);
+		UIButton aboutButton = (UIButton) findViewById(R.id.menu_about);
+		UIButton quitButton = (UIButton) findViewById(R.id.menu_quit);
+		CustomClickListener listener = new CustomClickListener();
+		optionsButton.addClickListener(listener);
+		studyButton.addClickListener(listener);
+		aboutButton.addClickListener(listener);
+		quitButton.addClickListener(listener);
+
+		
+
+		tabHost = getTabHost();
+		TabHost.TabSpec spec;
+		tabHost.setup();
+		Intent intent;
+		intent = new Intent().setClass(this, TVActivity.class);
+		spec = tabHost.newTabSpec(this.getString(R.string.tv))
+				.setIndicator(this.getString(R.string.str_tv))
+				.setContent(intent);
+		tabHost.addTab(spec);
+
+		intent = new Intent().setClass(this, DVDActivity.class);
+		spec = tabHost.newTabSpec(this.getString(R.string.dvd))
+				.setIndicator(this.getString(R.string.str_dvd))
+				.setContent(intent);
+		tabHost.addTab(spec);
+
+		intent = new Intent().setClass(this, STBActivity.class);
+		spec = tabHost.newTabSpec(this.getString(R.string.stb))
+				.setIndicator(this.getString(R.string.str_stb))
+				.setContent(intent);
+		tabHost.addTab(spec);
+
+		intent = new Intent().setClass(this, FanActivity.class);
+		spec = tabHost.newTabSpec(this.getString(R.string.fan))
+				.setIndicator(this.getString(R.string.str_fan))
+				.setContent(intent);
+		tabHost.addTab(spec);
+
+		intent = new Intent().setClass(this, PJTActivity.class);
+		spec = tabHost.newTabSpec(this.getString(R.string.pjt))
+				.setIndicator(this.getString(R.string.str_pjt))
+				.setContent(intent);
+		tabHost.addTab(spec);
+		intent = new Intent().setClass(this, AirActivity.class);
+		spec = tabHost.newTabSpec(this.getString(R.string.air))
+				.setIndicator(this.getString(R.string.str_air))
+				.setContent(intent);
+		tabHost.addTab(spec);
+		intent = new Intent().setClass(this, CameraActivity.class);
+		spec = tabHost.newTabSpec(this.getString(R.string.camera))
+				.setIndicator(this.getString(R.string.camera))
+				.setContent(intent);
+		tabHost.addTab(spec);
+		tabHost.setCurrentTab(0);
+		Value.currentType = 0;
+
+		tabHost.setOnTabChangedListener(new OnTabChangeListener() {
+			public void onTabChanged(String tabId) {
+				Value.currentType = tabHost.getCurrentTab();
+
+			}
+		});
+		TabWidget tabWidget = tabHost.getTabWidget();
+		int count = tabWidget.getChildCount();
+		DisplayMetrics dm = new DisplayMetrics();
+		getWindowManager().getDefaultDisplay().getMetrics(dm);
+		int screenWidth = dm.widthPixels;
+		int screenHeight = dm.heightPixels;
+		if (count > 4) {
+			for (int i = 0; i < count; i++) {
+				tabWidget.getChildTabViewAt(i).setMinimumWidth(screenWidth / 4);
+			}
+		}
+		for (int i = 0; i < tabWidget.getChildCount(); i++) {
+			tabWidget.getChildAt(i).getLayoutParams().height = (screenHeight) / 18;
+			tabWidget.getChildAt(i).getLayoutParams().width = screenWidth / 4;
+		}
+		int ret = RemoteComm.initRemote();
+		if (ret==1) {
+			Toast.makeText(mContext,
+					getResources().getString(R.string.device_open),
+					Toast.LENGTH_SHORT).show();
+			Value.terminal = 1;
+		} else if (ret==2) {
+			Toast.makeText(mContext,
+					getResources().getString(R.string.device_open),
+					Toast.LENGTH_SHORT).show();
+			Value.terminal = 2;
+		}else {
+			Toast.makeText(mContext,
+					getResources().getString(R.string.device_warning),
+					Toast.LENGTH_SHORT).show();
+			Value.terminal = 0;
+		}
+		
+		//Value.currentKey = "air_mode";
+		//Value.currentKey = "camera_pow";
+		Value.currentKey = "tv_key0";
+		KeyTreate.getInstance().keyTreate();
+
+	}
+
+	// private void createList() {
+	// CustomClickListener listener = new CustomClickListener();
+	// tableView.setClickListener(listener);
+	// tableView.addBasicItem(getResources().getString(R.string.options),
+	// "ѡ���Ӧ���豸");
+	// tableView.addBasicItem(getResources().getString(R.string.study), "����ѧϰ");
+	// tableView.addBasicItem(getResources().getString(R.string.about), "�豸��Ϣ");
+	// tableView.addBasicItem(getResources().getString(R.string.quit),
+	// "�˳���ƷӦ��");
+	//
+	//
+	//
+	// }
+
+	// private class CustomClickListener implements ClickListener {
+	//
+	// @Override
+	// public void onClick(int index) {
+	// Log.d("MainActivity", "item clicked: " + index);
+	// if(index == 0) {
+	// Intent optionsIntent = new Intent(mContext, BrandListActivity.class);
+	// startActivityForResult(optionsIntent, R.id.REQUEST_OPTIONS);
+	// }
+	// else if(index == 1) {
+	// Value.isStudying = true;
+	// Intent studyIntent = new Intent(mContext, StudyActivity.class);
+	// startActivityForResult(studyIntent, STUDY);
+	// }
+	// else if(index == 2) {
+	// LayoutInflater mInflater = LayoutInflater.from(mContext);
+	// View settingView = mInflater.inflate(R.layout.about_dialog, null);
+	// AlertDialog aboutDialog = new AlertDialog.Builder(mContext)
+	// .setIcon(R.drawable.ic_launcher)
+	// .setTitle(R.string.title_about)
+	// .setView(settingView)
+	// .setPositiveButton(R.string.dialog_ok,
+	// new DialogInterface.OnClickListener() {
+	// public void onClick(DialogInterface dialog,
+	// int whichButton) {
+	// }
+	// }).create();
+	// aboutDialog.show();
+	// }
+	// else if(index == 3) {
+	// AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+	// builder.setTitle(getString(R.string.str_title));
+	// builder.setMessage(getString(R.string.str_message));
+	// builder.setPositiveButton(getString(R.string.str_ok),
+	// new DialogInterface.OnClickListener() {
+	// public void onClick(DialogInterface dialog, int which) {
+	// dialog.dismiss();
+	//
+	// finish();
+	// }
+	// });
+	// builder.setNeutralButton(getString(R.string.str_back),
+	// new DialogInterface.OnClickListener() {
+	// public void onClick(DialogInterface dialog, int which) {
+	// dialog.dismiss();
+	// }
+	// });
+	// builder.show();
+	// }
+	//
+	//
+	// }
+	//
+	// }
+
+	private class CustomClickListener implements ClickListener {
+
+		@Override
+		public void onClick(View view) {
+			sd.close();
+			switch (view.getId()) {
+			case R.id.menu_options:
+				Intent optionsIntent = new Intent(mContext,
+						BrandListActivity.class);
+				startActivityForResult(optionsIntent, R.id.REQUEST_OPTIONS);
+				break;
+			case R.id.menu_study:
+				Intent studyIntent = new Intent(mContext, StudyActivity.class);
+				startActivityForResult(studyIntent, STUDY);
+
+				break;
+			case R.id.menu_about:
+				LayoutInflater mInflater = LayoutInflater.from(mContext);
+				View settingView = mInflater.inflate(R.layout.dialog_about,
+						null);
+				AlertDialog aboutDialog = new AlertDialog.Builder(mContext)
+						.setIcon(R.drawable.ic_launcher)
+						.setTitle(R.string.title_about)
+						.setView(settingView)
+						.setPositiveButton(R.string.dialog_ok,
+								new DialogInterface.OnClickListener() {
+									public void onClick(DialogInterface dialog,
+											int whichButton) {
+									}
+								}).create();
+				aboutDialog.show();
+
+				break;
+			case R.id.menu_quit:
+				AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+				builder.setTitle(getString(R.string.str_title));
+				builder.setMessage(getString(R.string.str_message));
+				builder.setPositiveButton(getString(R.string.str_ok),
+						new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog,
+									int which) {
+								dialog.dismiss();
+
+								finish();
+							}
+						});
+				builder.setNeutralButton(getString(R.string.str_back),
+						new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog,
+									int which) {
+								dialog.dismiss();
+							}
+						});
+				builder.show();
+
+				break;
+			default:
+				break;
+
+			}
+
+		}
+
+	}
+
+	@Override
+	public void onStart() {
+		super.onStart();
+		if (mKeyTreate == null) {
+			mKeyTreate = KeyTreate.getInstance();
+			mKeyTreate.setContext(this);
+			mKeyTreate.setHandler(mHandler);
+		}
+
+	}
+
+	@Override
+	public void onDestroy() {
+		super.onDestroy();
+
+		Save();
+		mUserDB.close();
+		mRmtDB.close();
+		RemoteComm.finishRemote();
+	}
+
+	@Override
+	public void onPause() {
+		super.onPause();
+		mUserDB.close();
+		mRmtDB.close();
+		// RemoteComm.finishRemote();
+	}
+
+	@Override
+	protected void onRestart() {
+		// TODO Auto-generated method stub
+		super.onRestart();
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// MenuInflater inflater = getMenuInflater();
+		getMenuInflater().inflate(R.menu.activity_main, menu);
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+
+		}
+		return false;
+	}
+
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		Log.v(TAG, "keycode ---->" + keyCode);
+		// TODO Auto-generated method stub
+		if (keyCode == KeyEvent.KEYCODE_BACK) {
+
+			mHandler.obtainMessage(R.id.MSG_OPTION_QUIT, 1, -1).sendToTarget();
+			return true;
+
+		}
+		if (keyCode == KeyEvent.KEYCODE_MENU) {
+			mHandler.obtainMessage(R.id.MSG_OPTION_QUIT, 1, -1).sendToTarget();
+			return true;
+		} else {
+			return super.onKeyDown(keyCode, event);
+		}
+	}
+
+	public boolean onDown(MotionEvent arg0) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+		switch (requestCode) {
+		case STUDY:
+			if (resultCode == RESULT_OK) {
+				Toast t = Toast.makeText(mContext, R.string.study_alert,
+						Toast.LENGTH_SHORT);
+				t.setGravity(Gravity.CENTER_HORIZONTAL, 0, 0);
+				LinearLayout toastView = (LinearLayout) t.getView();
+				   ImageView imageLearnKey = new ImageView(getApplicationContext());
+				   imageLearnKey.setImageResource(R.drawable.ir_icon_intro_pair_02);
+				   toastView.addView(imageLearnKey, 0);
+				t.show();
+			} else if (resultCode == RESULT_CANCELED) {
+				Bundle bundle = data.getExtras();
+				int status = bundle.getInt("status");
+				if (status == -1) {
+					Toast t = Toast.makeText(mContext, R.string.study_exit,
+							Toast.LENGTH_SHORT);
+					t.setGravity(Gravity.CENTER_HORIZONTAL, 0, 0);
+					t.show();
+
+				} else if (status == 0) {
+					Toast t = Toast.makeText(mContext, R.string.study_timeout,
+							Toast.LENGTH_SHORT);
+					t.setGravity(Gravity.CENTER_HORIZONTAL, 0, 0);
+					t.show();
+				}else if (status == -2) {
+					Toast t = Toast.makeText(mContext, R.string.study_noprepared,
+							Toast.LENGTH_SHORT);
+					t.setGravity(Gravity.CENTER_HORIZONTAL, 0, 0);
+					t.show();
+				}
+
+			}
+			break;
+		default:
+			break;
+		}
+
+	}
+
+	public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
+			float velocityY) {
+		// TODO Auto-generated method stub
+		int total = tabHost.getTabWidget().getChildCount();
+		int current = tabHost.getCurrentTab();
+		// TODO Auto-generated method stub
+		if (e1.getX() - e2.getX() > FLING_MIN_DISTANCE
+				&& Math.abs(velocityX) > FLING_MIN_VELOCITY) {
+			if (current + 1 > total) {
+				current = total - 1;
+			} else {
+				current = current + 1;
+			}
+			tabHost.setCurrentTab(current);
+			if (current % 4 != 0 || current == 0) {
+				mHs.scrollTo(
+						tabHost.getTabWidget()
+								.getChildTabViewAt(current - (current % 4))
+								.getLeft(), mHs.getHeight());
+			} else {
+				mHs.scrollTo(tabHost.getTabWidget().getChildTabViewAt(current)
+						.getLeft(), mHs.getHeight());
+			}
+
+		} else if (e2.getX() - e1.getX() > FLING_MIN_DISTANCE
+				&& Math.abs(velocityX) > FLING_MIN_VELOCITY) {
+			if (current - 1 < 0) {
+				current = 0;
+			} else {
+				current = current - 1;
+			}
+			tabHost.setCurrentTab(current);
+			mHs.scrollTo(tabHost.getTabWidget().getChildTabViewAt(current)
+					.getLeft(), mHs.getHeight());
+		}
+		return false;
+	}
+
+	public void onLongPress(MotionEvent e) {
+		// TODO Auto-generated method stub
+
+	}
+
+	public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX,
+			float distanceY) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public void onShowPress(MotionEvent e) {
+		// TODO Auto-generated method stub
+
+	}
+
+	public boolean onSingleTapUp(MotionEvent e) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public boolean onTouch(View arg0, MotionEvent arg1) {
+		// TODO Auto-generated method stub
+		return mGestureDetector.onTouchEvent(arg1);
+	}
+
+	public void Save() {
+		MyRemoteDatabase.saveRemoteIndex(mContext);
+	}
+
+	public void Load() {
+		mRmtDB = new RemoteDB(getApplicationContext());
+		try {
+			mRmtDB.createDataBase();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		mUserDB = new UserDB(getApplicationContext());
+		try {
+			mUserDB.createDataBase();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		MyRemoteDatabase.getRemoteIndex(mContext);
+
+		if (Value.initial) {
+			mUserDB.open();
+			mUserDB.getUserKeyValue();
+			mUserDB.close();
+			Value.airData = MyRemoteDatabase.getAirData(this);
+		} else {
+
+			KeyToRemote.keyTabSetValue(Value.DeviceType.TYPE_TV, mContext);
+			KeyToRemote.keyTabSetValue(Value.DeviceType.TYPE_STB, mContext);
+			KeyToRemote.keyTabSetValue(Value.DeviceType.TYPE_DVD, mContext);
+			KeyToRemote.keyTabSetValue(Value.DeviceType.TYPE_FAN, mContext);
+			KeyToRemote.keyTabSetValue(Value.DeviceType.TYPE_PJT, mContext);
+			KeyToRemote.keyTabSetValue(Value.DeviceType.TYPE_CAM, mContext);
+			// Log.v(TAG, Value.keyRemoteTab.toString());
+			mUserDB.open();
+			mUserDB.saveAllKeyTabValue();
+			mUserDB.close();
+
+			Value.initial = true;
+
+			Toast toast = Toast.makeText(getApplicationContext(),
+					R.string.updata_end, Toast.LENGTH_SHORT);
+			toast.setGravity(Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0);
+			toast.show();
+			Save();
+		}
+
+		// }
+
+	}
+
+	public static Context getContext() {
+		return mContext;
+	}
+
+	private final Handler mHandler = new Handler() {
+		Toast toast ;
+		@Override
+		public void handleMessage(Message msg) {
+			super.handleMessage(msg);
+			switch (msg.what) {
+		
+			case R.id.MESSAGE_SEND:
+				// vibrator =
+				// (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
+				// long [] pattern = {100,100};
+				// vibrator.vibrate(pattern,1);
+
+				break;
+			case R.id.MESSAGE_READ:
+
+				break;
+			case R.id.MESSAGE_TOAST:
+
+				break;
+			case R.id.MSG_LEARN_END:
+				RemoteComm.remoteLearnStop();
+				Value.isStudying = false;
+				mUserDB.open();
+				mUserDB.saveSingleKeyTabValue(Value.currentKey,
+						Value.keyRemoteTab.get(Value.currentKey));
+				mUserDB.close();
+				 toast = Toast.makeText(getApplicationContext(),
+						R.string.study_save, Toast.LENGTH_SHORT);
+				toast.setGravity(Gravity.CENTER_HORIZONTAL, 0, 0);
+		
+				toast.show();
+				
+				break;
+			case R.id.MSG_LEARN_ERR:
+				RemoteComm.remoteLearnStop();
+				Value.isStudying = false;
+				
+				toast = Toast.makeText(getApplicationContext(),
+						R.string.study_err, Toast.LENGTH_SHORT);
+				toast.setGravity(Gravity.CENTER_HORIZONTAL, 0, 0);
+		
+				toast.show();
+				
+				break;
+			case R.id.MSG_OPTION_STUDY:
+
+				Log.v(TAG, "msg study");
+				Value.isStudying = true;
+				Intent studyIntent = new Intent(mContext, StudyActivity.class);
+
+				startActivityForResult(studyIntent, STUDY);
+
+				break;
+			case R.id.MSG_OPTION_LIST:
+				Log.v("test", "btn_options btn_options");
+				Value.isStudying = false;
+				// RemoteComm.remoteLearnStop();
+				Intent optionsIntent = new Intent(mContext,
+						BrandListActivity.class);
+				startActivityForResult(optionsIntent, R.id.REQUEST_OPTIONS);
+				break;
+			case R.id.MSG_OPTION_QUIT:
+
+				AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+				builder.setTitle(getString(R.string.str_title));
+				builder.setMessage(getString(R.string.str_message));
+				builder.setPositiveButton(getString(R.string.str_ok),
+						new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog,
+									int which) {
+								dialog.dismiss();
+
+								finish();
+							}
+						});
+				builder.setNeutralButton(getString(R.string.str_back),
+						new DialogInterface.OnClickListener() {
+							public void onClick(DialogInterface dialog,
+									int which) {
+								dialog.dismiss();
+							}
+						});
+				builder.show();
+
+				// finish();
+
+				break;
+			case R.id.MSG_OPTION_ABOUT:
+
+			
+				break;
+			case R.id.MSG_STUDY_STORE:
+
+				break;
+			
+				
+				
+			default:
+				break;
+			}
+		}
+	};
+
+}

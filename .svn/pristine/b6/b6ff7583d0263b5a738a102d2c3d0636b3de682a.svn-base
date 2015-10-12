@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/LinearLayout1"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical"
+    android:layout_gravity="top"
+    tools:context=".SmbListActivity" >
+
+    <LinearLayout
+        android:background="#c2d598"
+        android:layout_width="match_parent"
+        android:layout_height="48dp" >
+
+        <Button
+            android:id="@+id/exit_bt"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:padding="12dp"
+            android:layout_gravity="center"
+            android:background="@drawable/back_selector"
+            android:drawableLeft="@drawable/exit" />
+
+        <TextView
+	        android:id="@+id/main_title"
+	        android:layout_marginLeft="-48dp"
+	        android:layout_width="match_parent"
+	        android:layout_height="match_parent"
+	        android:gravity="center"
+	        android:textSize="20dp"
+	        android:text="@string/wirelessstore" />
+    </LinearLayout>
+    
+    <LinearLayout
+        android:background="@drawable/menubar"
+        android:layout_width="match_parent"
+        android:weightSum="3"
+        android:layout_height="52dp" >
+
+        <Button
+            android:id="@+id/newfolder_bt"
+            android:text="@string/newfolder"
+            android:layout_weight="1"
+            style="@style/OpButton"
+            android:drawableLeft="@drawable/newfolder" />
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:src="@drawable/spec" 
+            />
+
+        <Button
+            android:id="@+id/upload_bt"
+            android:text="@string/upload"
+            android:layout_weight="1"
+            style="@style/OpButton"
+            android:drawableLeft="@drawable/upload"  />
+
+        <ImageView
+              android:layout_width="wrap_content"
+              android:layout_height="fill_parent"
+              android:src="@drawable/spec"  
+            />
+        <Button
+            android:id="@+id/backup_bt"
+            android:text="@string/backup"
+            android:layout_weight="1"
+            style="@style/OpButton"
+             android:drawableLeft="@drawable/backup" />
+    </LinearLayout>
+    
+    <TextView
+        android:id="@+id/show_path"
+        android:layout_width="match_parent"
+        android:layout_height="24dp"
+        android:ellipsize="middle"
+        android:singleLine="true"
+        android:textSize="14sp"/>
+    
+    <ListView
+        android:id="@android:id/list"
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:drawSelectorOnTop="false"
+        android:fastScrollEnabled="true" />
+    <TextView
+        android:id="@+id/volume_tip"
+        android:textSize="20dp"
+        android:background="#c2d598"
+        android:layout_width="match_parent"
+        android:gravity="left|center_vertical"
+        android:layout_height="31dp"
+        android:text="@string/calculating" />
+</LinearLayout>

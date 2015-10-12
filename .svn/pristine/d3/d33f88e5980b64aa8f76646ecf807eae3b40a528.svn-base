@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+ <string-array name="type_array">
+      	<item>空调</item>
+        <item>电视</item>
+        <item>影碟机</item>
+        <item>风扇</item>
+        <item>投影仪</item>
+       <item>机顶盒</item>
+        <item>照相机</item>
+    </string-array>
+    
+  <string-array name="usbmode_list">
+     <item>充电模式</item>
+     <item>U盘模式</item>
+ </string-array>
+ 
+</resources>
+   
+   

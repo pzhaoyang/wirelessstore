@@ -1,0 +1,181 @@
+package com.uninet.xiaoyou.wirelessstore;
+
+import java.io.File;
+
+import jcifs.smb.SmbFile;
+import android.app.AlertDialog;
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.SharedPreferences;
+import android.content.DialogInterface.OnClickListener;
+import android.content.SharedPreferences.Editor;
+import android.os.Build;
+import android.util.Log;
+
+public class Backup{
+
+	private String bak_path;
+	private Context mcontext;
+	File[] lfiles;
+	SmbFile[] smbfiles;
+	
+	public Backup(Context context) {
+		mcontext = context;
+		bak_path = getBakpath();
+		
+		if("".equals(bak_path)){
+			showErrorDlg(context);
+		}else{			
+			CreateBakDir();
+			SendUploadFiles(new File(bak_path));
+		}
+	}
+
+	private String getBakpath(){
+		return mcontext.getSharedPreferences("smburlinfo", 0).getString("bak_path","");
+	}
+	
+
+	private void showErrorDlg(Context context){
+		new AlertDialog.Builder(context)
+		.setTitle("错误")
+        .setMessage("请先设置需要备份的目录!")
+        .setNegativeButton(android.R.string.cancel,
+                new OnClickListener() {
+                    public void onClick(DialogInterface dialog,
+                            int which) {
+                    }
+                }).create().show();
+	}
+	
+	/**
+	 * 创建备份目录并返回路径
+	 * */
+	private String CreateBakDir(){
+		SmbFile f  = SmbOpApi.getSmbFileByUrl(GetBakdir());
+		Log.d("abc","bakdir = " + f.getPath());
+		SmbOpApi.mkdir(f);
+		Log.d("abc","createbakdir ok");
+		return f.getPath();
+	}
+	
+
+	/**
+	 * 获取备份目录路径
+	 * */
+	private String GetBakdir(){
+		String   bak = getModel() +"_"+ getTime() + "/";
+		bak = mcontext.getSharedPreferences("smburlinfo", 0).getString("bak_dir", "");
+		if("".equals(bak)){
+			SharedPreferences sp = mcontext.getSharedPreferences("smburlinfo",0);
+			Editor ed = sp.edit();
+			bak = getModel() +"_"+ getTime() + "/";
+			ed.putString("bak_dir",bak );
+			ed.commit();				
+		}
+		return SmbOpApi.getSmbRoot(mcontext,SmbOpApi.ip) + bak;
+	}
+	
+	/**
+	 * 比较本地文件是否和smb上的文件相等 相等为true,不相等为false;
+	 * 如果连文件都不存在就不用比较直接认为不相等返回false;
+	 * @param lfile  本地文件
+	 * 如果smbfile 不存在就不用比较直接返回true 上传成功。 
+	 * */
+	private boolean cmpfile(File lfile){
+		boolean result = false;
+		String smbfile = GetBakdir() + lfile.getName();
+		SmbFile sbf = SmbOpApi.getSmbFileByUrl(smbfile);
+		if(!SmbOpApi.isExists(smbfile)){
+			return result;
+		}
+
+		try {
+			//文件大小相同才做校验，文件大小不同就直接返回结果
+			if((sbf.length() == lfile.length())){
+				//用于服务器做远程校验 返回校验码
+				String smbfile_cs = "aaa";//FileCheckSum.GetSmbFileCheckSum(smbfile);
+				String lfile_cs = "aaa";//FileCheckSum.GetFileCheckSum(lfile.getPath());
+				result = smbfile_cs.equals(lfile_cs);
+			}
+		} catch (Exception e) {
+			Log.d("abc","cmpfile Exception = " + e);
+			Log.d(SmbOpApi.TAG,"cmpfile error!: " + e);
+		}
+		Log.d("abc","cmpfile end result = " + result);
+		return result;
+	}
+	
+	/**
+	 * @param bak_path 需要上传的目录路径
+	 * 通过本地目录和smba备份目录中比较，如果本地有samba没有就上传，本地修改，也上传
+	 * */
+	private void SendUploadFiles(File bak_path){
+		File tmpfileArray[] = bak_path.listFiles();
+		for(int i=0; i<tmpfileArray.length; i++){
+			if(tmpfileArray[i].isDirectory()){
+				SmbOpApi.mkdir(SmbOpApi.getSmbFileByUrl(GetBakdir() + tmpfileArray[i].getPath().substring(this.bak_path.length()+1)));
+				SendUploadFiles(tmpfileArray[i]);
+				Log.d("abc","Sub dir..");
+			} else{
+				if(!cmpfile(tmpfileArray[i])){
+					Init.th.GetMessageHander().post( new bakrunning(tmpfileArray[i]));
+				}
+			}
+		}
+	}
+	
+	class bakrunning implements Runnable{
+		File param;
+		Runnable r;
+		bakrunning(File pm){
+			param = pm;
+		}
+
+		@Override
+		public void run() {
+			synchronized (Init.obLock) {
+				Log.d("abc","runnable running... param = " + param.getPath());
+				r = this;
+				upload(SmbOpApi.getSmbFileByUrl(GetBakdir()+  param.getPath().substring(bak_path.length()+1)), param.getPath(), r);
+				((SmbListActivity) mcontext).BackUpdate();
+				
+			}
+		}
+	}
+	
+	public static void upload(SmbFile targedfile, String pickedfile, Runnable r){
+		String toast = "";
+	
+		do{
+			ThreadInfo ti = new ThreadInfo("正在备份: "+targedfile.getName(), r);
+			ExchangeHandler.GetExchangeHandlerInstance().showProgressDialog(ti,ProgressDialog.STYLE_HORIZONTAL);
+			Log.d("abc","targedfile = " + targedfile + ", pickedfile  = " + pickedfile);
+			toast = SmbOpApi.up(targedfile,pickedfile);
+			ExchangeHandler.GetExchangeHandlerInstance().sendMessage(
+					Init.MsgElement(ExchangeHandler.MSG_DISMISS_PROGRESS_DLG, null));
+			Log.d("abc","backup toast = " + toast);
+			if(!toast.contains("Success")){
+				ExchangeHandler.GetExchangeHandlerInstance().sendMessage(
+						Init.MsgElement(ExchangeHandler.MSG_SHOW_RETRY_DLG,targedfile.getName(),ProgressDialog.STYLE_HORIZONTAL));
+				ExchangeHandler.GetExchangeHandlerInstance().getSynclock().waitfor();
+			}else{
+				boolean isdel = SmbListActivity.getContext().getSharedPreferences("smburlinfo", 0).getBoolean("delete_file", false);
+				if(isdel){
+					 new File(pickedfile).delete();
+				}
+			}
+		}while(SmbOpApi.getAppendFlg());
+	}
+	
+	String getModel(){
+		Build bd = new Build();
+		return bd.MODEL;
+	}
+	
+	String getTime(){
+		String time = String.valueOf(System.currentTimeMillis());
+		return time;
+	}
+}

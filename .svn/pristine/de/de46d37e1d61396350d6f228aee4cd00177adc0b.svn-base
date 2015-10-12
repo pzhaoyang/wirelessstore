@@ -1,0 +1,1117 @@
+package com.uninet.xiaoyou.wirelessstore;
+
+import com.uninet.xiaoyou.*;
+
+import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URLEncoder;
+
+import jcifs.smb.*;
+
+import java.util.*;
+
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.app.ListActivity;
+import android.app.ProgressDialog;
+import android.content.ActivityNotFoundException;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.DialogInterface.OnClickListener;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.text.InputFilter;
+import android.text.Spanned;
+import android.text.format.Formatter;
+import android.util.Log;
+import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ListView;
+import android.widget.TextView;
+
+public class SmbListActivity extends ListActivity{
+
+	
+	private String root = "/";
+	private String CurrPath = "";
+	private static  IconifiedText SelectedItem = null;
+	
+	public static final int REQUEST_CODE_UPLOAD = 1;
+	public static final int REQUEST_CODE_DOWNLOAD = 2;
+	public static final int REQUEST_CODE_BAK_DIR_SETTING = 3;
+	
+	final static int DLG_NEGATIVE_BT = 1;
+	final static int DLG_NEUTRAL_BT = 2;
+	final static int DLG_POSITIVE_BT = 3;
+	
+	final public static int MAX_PATH_LEN = 255; 
+	
+	private static Context mContext;
+	
+	private static final int MENU_RENAME_ID = 3;
+	private static final int MENU_DELETE_ID = 4;
+	private static final int MENU_COPY_ID = 5;
+	private static final int MENU_CUT_ID = 6;
+	private static final int MENU_PAST_ID = 7;
+	private static final int MENU_DOWNLOAD_ID = 8;
+	private static final int MENU_UPLOAD_ID = 9;
+	private static final int MENU_NEW_FOLDER_ID = 10;
+	private static final int MENU_SETTING_ID = 11;
+	private static final int DIALOG_DOWNLOAD_RETRY_ID = 12;
+	private static final int DIALOG_UPLOAD_RETRY_ID = 13;
+	private static final int MENU_BAKING_ID = 14;
+	
+	private IconifiedTextListAdapter listItemAdapter = null;
+	private SearchTask task = null;
+	private ArrayList<IconifiedText> alist = new ArrayList<IconifiedText>();
+	private TextView cpath = null;
+	private Button bback = null;
+	private Button bnewfolder = null;
+	private Button bupload = null;
+	private Button bbackup = null;
+	
+	
+	private int getIconbyFile(String filepath){
+		int icon = R.drawable.ic_launcher;
+		SmbFile file = SmbOpApi.getSmbFileByUrl(filepath);
+		
+		if(SmbOpApi.isDir(file)){
+			icon = R.drawable.folder;
+		}else{
+			icon = MimeUtils.getIconbyType(MimeUtils.getmimetype(MimeUtils.getextension(file.getName())));
+		}
+		
+		return icon;
+	}
+	
+	private void setAdapter(){
+		listItemAdapter = new IconifiedTextListAdapter(SmbListActivity.this);
+		listItemAdapter.setListItems(alist);
+        setListAdapter(listItemAdapter);
+	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+//		setTitle(CurrPath.substring(CurrPath.indexOf("@")+1));
+		cpath.setText(getString(R.string.show_showpath, CurrPath.substring(CurrPath.indexOf("@")+1)));
+		setAdapter();
+	}
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		
+		SmbOpApi.ip = getIntent().getStringExtra("url");
+		CurrPath = root = SmbOpApi.getSmbRoot(this, SmbOpApi.ip);
+
+		setContentView(R.layout.activity_list);
+		TextView tv = (TextView)findViewById(R.id.main_title);
+		tv.setText(R.string.wirelessstore);
+		mContext = this;
+		
+		
+		cpath = (TextView)findViewById(R.id.show_path); 
+		bback = (Button)findViewById(R.id.exit_bt);
+		bnewfolder = (Button)findViewById(R.id.newfolder_bt);
+		bupload = (Button)findViewById(R.id.upload_bt);
+		bbackup = (Button)findViewById(R.id.backup_bt);
+		
+		bback.setOnClickListener(getButtonListener());
+		bnewfolder.setOnClickListener(getButtonListener());
+		bupload.setOnClickListener(getButtonListener());
+		bbackup.setOnClickListener(getButtonListener());
+		
+
+		Intent intent = new Intent(SmbListActivity.this, StreamService.class);
+		startService(intent);
+		
+		GeneralUtil.SetAuth(SmbOpApi.getAuthbyUrl(SmbListActivity.this, SmbOpApi.ip));
+        searchFile(root);
+        
+        getListView().setOnCreateContextMenuListener(this);
+	}
+
+	@Override
+	public void onCreateContextMenu(ContextMenu menu, View v,
+			ContextMenuInfo menuInfo) {
+		AdapterContextMenuInfo info = (AdapterContextMenuInfo)menuInfo;
+		IconifiedTextListAdapter adapter = (IconifiedTextListAdapter) getListAdapter();
+		IconifiedText tmpItem = (IconifiedText) adapter.getItem(info.position);
+		
+		if(tmpItem.getText().equals("..")){
+			return;
+		}
+		
+		menu.setHeaderTitle(tmpItem.getText());
+		menu.add(0, MENU_RENAME_ID, 0, getString(R.string.reame));
+		menu.add(0, MENU_DELETE_ID, 0, getString(R.string.delete));
+		menu.add(0, MENU_COPY_ID, 0, getString(R.string.copy));
+		menu.add(0, MENU_CUT_ID, 0, getString(R.string.cut));
+		if(!tmpItem.isFile()){
+			menu.add(0, MENU_UPLOAD_ID, 0, getString(R.string.upload));
+			menu.add(0, MENU_PAST_ID, 0, getString(R.string.paste));
+			menu.add(0, MENU_NEW_FOLDER_ID, 0, getString(R.string.mkdir));
+		}else{
+			menu.add(0, MENU_DOWNLOAD_ID, 0,getString(R.string.download));
+		}
+		super.onCreateContextMenu(menu, v, menuInfo);
+	}
+
+	@Override
+	public boolean onContextItemSelected(MenuItem item) {
+		
+		AdapterContextMenuInfo info = (AdapterContextMenuInfo)item.getMenuInfo();
+		IconifiedTextListAdapter adapter = (IconifiedTextListAdapter) getListAdapter();
+		SelectedItem = (IconifiedText) adapter.getItem(info.position);
+		
+		showDialog(item.getItemId());
+		return super.onContextItemSelected(item);
+	}
+	
+	@Override
+	protected void onPrepareDialog(int id, Dialog dialog) {
+		switch (id) {
+        case MENU_RENAME_ID:
+        	if(SelectedItem == null) break;
+        	int  sublen = CurrPath.substring(CurrPath.indexOf("@")+1).length()+2;
+        	int len = SelectedItem.isFile() ? (NameLengthFilter.FILE_PATH_MAX_LENGTH - sublen)
+        			: (NameLengthFilter.FOLDER_PATH_MAX_LENGTH - sublen);
+        	EditText et = (EditText) dialog.findViewById(R.id.foldername);
+            et.setFilters(new InputFilter[] { new NameLengthFilter(mContext, len )}); 
+        	String tmp = SelectedItem.getText().contains("/") ? SelectedItem.getText().substring(0,SelectedItem.getText().length()-1) : SelectedItem.getText();
+            et.setText(tmp);
+            break;
+        case MENU_DELETE_ID:
+        	if(SelectedItem == null) break;
+        	
+        	((AlertDialog) dialog).setMessage(mContext.getString(R.string.del_msg, SelectedItem.getText()));
+            break;
+        case MENU_DOWNLOAD_ID:
+        	GeneralUtil.is_pick_file = false;
+        	new BrowsLocalFileTask(Init.getStoragePrefix());
+        	break;
+        case MENU_UPLOAD_ID:
+        	new BrowsLocalFileTask(Init.getStoragePrefix());
+            break;
+        case MENU_NEW_FOLDER_ID:
+        	sublen = SelectedItem == null ? (CurrPath.substring(CurrPath.indexOf("@")+1).length()+2) 
+        			: (SelectedItem.getPath().substring(SelectedItem.getPath().indexOf("@")+1).length()+2);
+        	Log.d("abc","sublen = " + sublen);
+        	len = NameLengthFilter.FOLDER_PATH_MAX_LENGTH - sublen;
+        	Log.d("abc","len = " + len );
+
+        	EditText et2 = (EditText) dialog.findViewById(R.id.foldername);
+            et2.setFilters(new InputFilter[] { new NameLengthFilter(mContext, len) });
+            et2.setText(mContext.getString(R.string.mkdir));
+            et2.requestFocus();
+            et2.selectAll();
+            break;
+		}
+
+	}
+	@Override
+	protected Dialog onCreateDialog(int id) {
+		
+		switch (id) {
+			case MENU_RENAME_ID:
+				LayoutInflater inflater = LayoutInflater.from(this);
+				View view = inflater.inflate(R.layout.dialog_new_folder, null);
+	        	int  sublen = CurrPath.substring(CurrPath.indexOf("@")+1).length()+2;
+	        	Log.d("abc","sublen = " + sublen + ", path  = " + CurrPath.substring(CurrPath.indexOf("@")+1));
+	        	int len = SelectedItem.isFile() ? (NameLengthFilter.FILE_PATH_MAX_LENGTH - sublen +2)
+	        			: (NameLengthFilter.FOLDER_PATH_MAX_LENGTH - sublen +2);
+	        	Log.d("abc","len = " + len );
+				final EditText et2 = (EditText) view.findViewById(R.id.foldername);
+				et2.setFilters(new InputFilter[] { new NameLengthFilter(mContext,  len ) });
+				return new OpAlertDlg(mContext, mContext.getString(R.string.reame),view,
+						setAlertBt(mContext.getString(android.R.string.cancel), getDialogListener(MENU_RENAME_ID,DLG_NEGATIVE_BT)),
+						null,
+						setAlertBt(mContext.getString(android.R.string.ok), getDialogListener(MENU_RENAME_ID,DLG_POSITIVE_BT,et2))).create();
+			case MENU_DELETE_ID:
+				if(SelectedItem == null){
+					Log.d(SmbOpApi.TAG," selecteditem error!");
+					break;
+				}
+				return new OpAlertDlg(mContext,  mContext.getString(R.string.delete), mContext.getString(R.string.del_msg, SelectedItem.getText()),
+						setAlertBt(mContext.getString(android.R.string.cancel), getDialogListener(MENU_DELETE_ID,DLG_NEGATIVE_BT)),
+						null,
+						setAlertBt(mContext.getString(android.R.string.ok), getDialogListener(MENU_DELETE_ID,DLG_POSITIVE_BT))).create();
+			case MENU_COPY_ID:
+				if(SelectedItem == null) break;
+				SmbOpApi.copy(mContext, SmbOpApi.getSmbFileByUrl(SelectedItem.getPath()));
+				SelectedItem = null;
+				break;
+			case MENU_CUT_ID:
+				if(SelectedItem == null) break;
+				SmbOpApi.cut(mContext, SmbOpApi.getSmbFileByUrl(SelectedItem.getPath()));
+				SelectedItem = null;
+				break;
+			case MENU_PAST_ID:
+				if(SmbOpApi.CopyorCut_buffer != null && SelectedItem != null){
+					
+					if(IsMaxPath(SmbOpApi.CopyorCut_buffer)){
+						ExchangeHandler.GetExchangeHandlerInstance().sendMessage(GeneralHandler.MsgElement(ExchangeHandler.MSG_SHOW_TOAST, 
+								mContext.getString(R.string.max_path)));
+						break;
+					}
+					
+					if(SmbOpApi.CopyorCut_flag == 1 &&
+							(SelectedItem.getPath() + SmbOpApi.CopyorCut_buffer.getName()).equals(SmbOpApi.CopyorCut_buffer.getPath())){
+						ExchangeHandler.GetExchangeHandlerInstance().sendMessage(GeneralHandler.MsgElement(ExchangeHandler.MSG_SHOW_TOAST, 
+								mContext.getString(R.string.Illegal_operation)));
+						break;
+					}
+					Init.th.GetMessageHander().post(new pasterunning(SmbOpApi.getSmbFileByUrl(
+							SelectedItem.getPath() +
+							CheckSmbFileExist( SelectedItem.getPath() , SmbOpApi.CopyorCut_buffer.getName()))));
+					SelectedItem = null;
+				}else{
+					ExchangeHandler.GetExchangeHandlerInstance().sendMessage(GeneralHandler.MsgElement(ExchangeHandler.MSG_SHOW_TOAST, 
+							mContext.getString(R.string.copyorcut_first)));
+				}
+				break;
+			case MENU_DOWNLOAD_ID:
+				view = BrowsLocalFileTask.SetDialogListAdapter(this);
+				GeneralUtil.is_pick_file = false;
+				new BrowsLocalFileTask(Init.getStoragePrefix());
+				return new OpAlertDlg(mContext, mContext.getString(R.string.choice_download_dir), view,
+						setAlertBt(mContext.getString(android.R.string.cancel),getDialogListener(MENU_DOWNLOAD_ID,DLG_NEGATIVE_BT)),
+						null,
+						setAlertBt(mContext.getString(android.R.string.ok),getDialogListener(MENU_DOWNLOAD_ID,DLG_POSITIVE_BT))).create(); 
+			case MENU_UPLOAD_ID:
+				view = BrowsLocalFileTask.SetDialogListAdapter(this);
+				new BrowsLocalFileTask(Init.getStoragePrefix());
+				return new OpAlertDlg(mContext, mContext.getString(R.string.choice_upload_file),view,
+						setAlertBt(mContext.getString(android.R.string.cancel), getDialogListener(MENU_UPLOAD_ID,DLG_NEGATIVE_BT)),
+						null,
+						setAlertBt(mContext.getString(android.R.string.ok), getDialogListener(MENU_UPLOAD_ID,DLG_POSITIVE_BT))).create();
+			case MENU_NEW_FOLDER_ID:
+				inflater = LayoutInflater.from(this);
+				view = inflater.inflate(R.layout.dialog_new_folder, null);
+	        	sublen = SelectedItem == null ? (CurrPath.substring(CurrPath.indexOf("@")+1).length()+2)
+	        			: (SelectedItem.getPath().substring(SelectedItem.getPath().indexOf("@")+1).length()+2);
+	        	len = NameLengthFilter.FOLDER_PATH_MAX_LENGTH - sublen;
+	        	
+				final EditText et3 = (EditText) view.findViewById(R.id.foldername);
+				et3.setFilters(new InputFilter[] { new NameLengthFilter(mContext, len) });
+	            et3.setText(mContext.getString(R.string.mkdir));
+	            et3.requestFocus();
+	            et3.selectAll();
+				return new OpAlertDlg(mContext,mContext.getString(R.string.mkdir), view,
+						setAlertBt(mContext.getString(android.R.string.cancel), getDialogListener(MENU_NEW_FOLDER_ID,DLG_NEGATIVE_BT)),
+						null,
+						setAlertBt(mContext.getString(android.R.string.ok), getDialogListener(MENU_NEW_FOLDER_ID,DLG_POSITIVE_BT,et3))).create();
+			case DIALOG_DOWNLOAD_RETRY_ID:
+				return new OpAlertDlg(mContext, mContext.getString(R.string.taskfailed),
+						setAlertBt(mContext.getString(android.R.string.cancel), getDialogListener(DIALOG_DOWNLOAD_RETRY_ID,DLG_NEGATIVE_BT)),
+						null,
+						setAlertBt(mContext.getString(R.string.retry), getDialogListener(DIALOG_DOWNLOAD_RETRY_ID,DLG_POSITIVE_BT))).create();
+			case DIALOG_UPLOAD_RETRY_ID:
+				return new OpAlertDlg(mContext, mContext.getString(R.string.taskfailed),
+						setAlertBt(mContext.getString(android.R.string.cancel), getDialogListener(DIALOG_UPLOAD_RETRY_ID,DLG_NEGATIVE_BT)),
+						null,
+						setAlertBt(mContext.getString(R.string.retry), getDialogListener(DIALOG_UPLOAD_RETRY_ID,DLG_POSITIVE_BT))).create();
+		}
+		return null;
+	}
+	
+	@Override
+	public void onBackPressed() {
+		if(!CurrPath.equals(root)){
+			String path = SmbOpApi.getSmbFileByUrl(CurrPath).getParent().toString();
+//			setTitle(path.substring(path.indexOf("@")+1));
+			cpath.setText(getString(R.string.show_showpath, path.substring(path.indexOf("@")+1)));
+			searchFile(path);
+		}else
+			super.onBackPressed();
+	}
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		menu.add(Menu.NONE, MENU_SETTING_ID, 0, mContext.getString(R.string.bakup_setup));
+		menu.add(Menu.NONE, MENU_NEW_FOLDER_ID, 0, mContext.getString(R.string.mkdir));
+		menu.add(Menu.NONE, MENU_UPLOAD_ID, 0, mContext.getString(R.string.upload));
+		menu.add(Menu.NONE, MENU_PAST_ID, 0, mContext.getString(R.string.paste));
+		menu.add(Menu.NONE, MENU_BAKING_ID, 0, mContext.getString(R.string.start_backup));
+		return super.onCreateOptionsMenu(menu);
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+	
+		switch(item.getItemId()){
+		case MENU_SETTING_ID:
+	        Intent intent = new Intent();
+	        intent.setClass(this, WirelessSettingActivity.class);
+			startActivity(intent);
+            break;
+		case MENU_NEW_FOLDER_ID:
+			LayoutInflater inflater = LayoutInflater.from(this);
+			View view = inflater.inflate(R.layout.dialog_new_folder, null);
+        	int sublen = CurrPath.substring(CurrPath.indexOf("@")+1).length()+2;
+        	int len = NameLengthFilter.FOLDER_PATH_MAX_LENGTH - sublen;
+        	
+			final EditText et3 = (EditText) view.findViewById(R.id.foldername);
+			et3.setFilters(new InputFilter[] { new NameLengthFilter(mContext, len) });
+            et3.setText(mContext.getString(R.string.mkdir));
+            et3.requestFocus();
+            et3.selectAll();
+			new OpAlertDlg(mContext,mContext.getString(R.string.mkdir),view,
+					setAlertBt(mContext.getString(android.R.string.cancel), getDialogListener(MENU_NEW_FOLDER_ID,DLG_NEGATIVE_BT)),
+					null,
+					setAlertBt(mContext.getString(android.R.string.ok), getDialogListener(MENU_NEW_FOLDER_ID,DLG_POSITIVE_BT,et3))).show();
+			break;
+		case MENU_UPLOAD_ID:
+			showDialog(MENU_UPLOAD_ID);
+			 break;
+		case MENU_PAST_ID:
+			if(SmbOpApi.CopyorCut_buffer != null){
+				if(IsMaxPath(SmbOpApi.CopyorCut_buffer)){
+					ExchangeHandler.GetExchangeHandlerInstance().sendMessage(GeneralHandler.MsgElement(ExchangeHandler.MSG_SHOW_TOAST, 
+							mContext.getString(R.string.max_path)));
+					break;
+				}
+				
+				if(SmbOpApi.CopyorCut_flag == 1 &&
+						(CurrPath + SmbOpApi.CopyorCut_buffer.getName()).equals(SmbOpApi.CopyorCut_buffer.getPath())){
+					ExchangeHandler.GetExchangeHandlerInstance().sendMessage(GeneralHandler.MsgElement(ExchangeHandler.MSG_SHOW_TOAST, 
+							mContext.getString(R.string.Illegal_operation)));
+					break;
+				}
+				Init.th.GetMessageHander().post(new pasterunning(SmbOpApi.getSmbFileByUrl(
+						CurrPath +
+						CheckSmbFileExist( CurrPath , SmbOpApi.CopyorCut_buffer.getName()))));
+			}else{
+				ExchangeHandler.GetExchangeHandlerInstance().sendMessage(GeneralHandler.MsgElement(ExchangeHandler.MSG_SHOW_TOAST, 
+						mContext.getString(R.string.copyorcut_first)));
+			}
+			 break;
+		case MENU_BAKING_ID:
+			 new Backup(mContext);
+			 break;
+		default:
+			break;
+		}
+		return super.onOptionsItemSelected(item);
+	}
+
+	
+	private void showtotal(SmbFile disk){
+		String total  = SmbOpApi.getDiskFreeSpace(SmbListActivity.this, disk);
+		TextView tv = (TextView)findViewById(R.id.volume_tip);
+		tv.setText(total);
+	}
+	
+	
+	private void openfile(IconifiedText it){
+		String httpReq = "http://" + GeneralUtil.localip + ":" + GeneralUtil.port + "/smb=";
+		Log.d("abc","source1 path = " + it.getPath());
+		String tmp = SmbOpApi.prefix + SmbOpApi.getAuthbyUrl(mContext, SmbOpApi.ip ) + "@";
+		String path = it.getPath().substring(tmp.length());
+		Log.d("abc","source path = " + path);
+		String mimetype = MimeUtils.getmimetype(MimeUtils.getextension(it.getText()));
+		Uri uri;
+		Log.d(SmbOpApi.TAG,"substring path = " + path + ",\nmimetype = " + mimetype);
+		
+		if( mimetype.contains("image")
+			||mimetype.contains("text")
+			||mimetype.contains("video")
+			||mimetype.contains("audio")){
+			try {
+				path = URLEncoder.encode(path, "UTF-8");
+			} catch (UnsupportedEncodingException e) {
+				Log.d(SmbOpApi.TAG,"UnsupportedEncodingException Error!: " + e);
+			}
+			path = path.replace("+","%20");//bug space to "+"
+			Log.d("abc","path  = " + path );
+			
+			String url = httpReq + path;
+			Log.d(SmbOpApi.TAG,"http endoced url : "  + url);
+			uri = Uri.parse(url);
+			
+			Intent intent = new Intent(Intent.ACTION_VIEW);
+			if(mimetype.contains("text")){
+				mimetype = "text/*";
+			}
+			Log.d(SmbOpApi.TAG, "mimetype last = " + mimetype);
+			intent.setDataAndType(uri, mimetype);
+			try {
+				startActivity(intent);
+			} catch (ActivityNotFoundException e) {
+				ExchangeHandler.GetExchangeHandlerInstance().sendMessage(GeneralHandler.MsgElement(ExchangeHandler.MSG_SHOW_TOAST, 
+						mContext.getString(R.string.unsupport)));
+			}
+		}else{
+			File dir = new File(SmbOpApi.tmpdir);
+			if(!dir.exists()){
+				dir.mkdirs();
+			}
+			Init.th.GetMessageHander().post(new cachefilerunning(getContext(),SmbOpApi.getSmbFileByUrl(it.getPath()), mimetype));
+		}
+	}
+	
+	private void searchFile(String path){
+			if (task == null || task.getStatus().equals(AsyncTask.Status.FINISHED)){
+				task = new SearchTask();
+				task.execute(path);
+			}
+	}
+	
+	class SearchTask extends AsyncTask<String, Void, Void>{
+		ArrayList<IconifiedText> item = new ArrayList<IconifiedText>();
+		private ProgressDialog dialog = null;
+		
+		@Override
+		protected void onPreExecute(){
+			super.onPreExecute();
+			dialog = new ProgressDialog(SmbListActivity.this);
+			dialog.setMessage(mContext.getString(R.string.loading));
+			dialog.setCanceledOnTouchOutside(false);
+			dialog.show();
+		}
+
+		@Override
+		protected Void doInBackground(String... params){
+			try {
+				Log.d(SmbOpApi.TAG,"SearchTask params[0]" + params[0]);
+				SmbFile smbFile = new SmbFile(params[0]);
+				ArrayList<SmbFile> dirList = new ArrayList<SmbFile>();
+				ArrayList<SmbFile> fileList = new ArrayList<SmbFile>();
+	
+				setCurrPath(smbFile);
+				
+				SmbFile[] fs = smbFile.listFiles();
+
+				for (SmbFile f : fs){
+					if (f.isDirectory()){
+						dirList.add(f);
+					} else {
+						fileList.add(f);
+					}
+				}
+	
+				dirList.addAll(fileList);
+	
+				for (SmbFile f : dirList){
+					String filePath = f.getPath();
+					String fileName = f.getName();
+					boolean isFile = f.isFile();
+					String fileSize = Formatter.formatFileSize(SmbListActivity.this, f.length());
+					Drawable dab = getResources().getDrawable(
+							getIconbyFile(filePath));
+					/*IconifiedText(String filename, String filepath,boolean isfile, Drawable fileicon,);*/
+					if(isFile){
+						item.add(new IconifiedText(fileName, filePath, isFile, fileSize, dab));
+					}else{
+						item.add(new IconifiedText(fileName, filePath, isFile, dab));
+					}
+				}
+	
+			}catch (MalformedURLException e){
+					Log.d(SmbOpApi.TAG, "MalformedURLException = " + e);
+			}catch (SmbException e){
+					ExchangeHandler.GetExchangeHandlerInstance().sendMessage(GeneralHandler.MsgElement(ExchangeHandler.MSG_SHOW_TOAST, 
+							mContext.getString(R.string.disconnect)));
+					SmbListActivity.this.finish();
+					Log.d(SmbOpApi.TAG, "SmbException = " + e);
+			}
+			return null;
+		}
+
+		@Override
+		protected void onPostExecute(Void result) {
+			super.onPostExecute(result);
+			
+			alist.clear();
+			if(!isRoot()){
+				String up = SmbOpApi.getSmbFileByUrl(CurrPath).getParent().toString();
+				alist.add(new IconifiedText("..", up, false, getResources().getDrawable(R.drawable.folder)));
+			}
+			
+			for (IconifiedText i : item){
+				alist.add(i);
+			}
+
+			dialog.cancel();
+			showtotal(SmbOpApi.getSmbFileByUrl(CurrPath));
+			listItemAdapter.notifyDataSetChanged();
+		}
+
+	}
+
+	@Override
+	protected void onListItemClick(ListView l, View v, int position, long id) {
+		super.onListItemClick(l, v, position, id);
+		IconifiedText it = alist.get(position);
+		
+		String path = it.getPath();
+		if(it.isFile()){
+			openfile(it);
+		}else{
+			CurrPath = path;
+			Log.d(SmbOpApi.TAG,"CurrPath = " + CurrPath);
+			
+//			setTitle(path.substring(path.indexOf("@")+1));
+			cpath.setText(getString(R.string.show_showpath, path.substring(path.indexOf("@")+1)));
+			searchFile(path);
+		}
+	}
+
+	private void setCurrPath(SmbFile sbf){
+		if(!sbf.toString().equals(root)){
+			CurrPath = sbf.toString();
+		}else{
+			CurrPath = root;
+		}
+	}
+	
+	private boolean isRoot(){
+		return CurrPath.equals(root);
+	}
+
+	public static Context getContext(){
+		return mContext;
+	}
+	
+	AlertButton setAlertBt(CharSequence text, OnClickListener l ){
+		AlertButton ab = new AlertButton();
+		ab.text = text;
+		ab.listener = l;
+		return ab;
+	}
+	
+	
+	OnClickListener getDialogListener(final int id, final int whichbt,final Object...args){
+		OnClickListener l = null;
+		l = new OnClickListener() {
+			
+			@Override
+			public void onClick(DialogInterface arg0, int arg1) {
+				switch(id){
+				case MENU_RENAME_ID:
+					if(whichbt == DLG_NEGATIVE_BT){
+					}else if(whichbt == DLG_NEUTRAL_BT){
+					}else if(whichbt == DLG_POSITIVE_BT){
+						Init.th.GetMessageHander().post(new renameunning(args));
+					}
+					break;
+				case MENU_DELETE_ID:
+					if(whichbt == DLG_NEGATIVE_BT){
+					}else if(whichbt == DLG_NEUTRAL_BT){
+					}else if(whichbt == DLG_POSITIVE_BT){
+						Init.th.GetMessageHander().post(new deleteunning());
+					}
+					break;
+				case MENU_PAST_ID:
+					if(whichbt == DLG_NEGATIVE_BT){
+						
+					}else if(whichbt == DLG_NEUTRAL_BT){
+						
+					}else if(whichbt == DLG_POSITIVE_BT){
+						
+					}
+					break;
+				case MENU_DOWNLOAD_ID:
+					if(whichbt == DLG_NEGATIVE_BT){
+						BrowsLocalFileTask.setNativeCurrPath(new File(""));
+					}else if(whichbt == DLG_NEUTRAL_BT){
+						
+					}else if(whichbt == DLG_POSITIVE_BT){
+						if(SelectedItem != null){
+							Init.th.GetMessageHander().post(new downloadrunning(SmbOpApi.getSmbFileByUrl(SelectedItem.getPath()), BrowsLocalFileTask.getNativeCurrPath()));
+							SelectedItem = null;
+						}
+					}
+					GeneralUtil.is_pick_file = true;
+					break;
+				case MENU_UPLOAD_ID:
+					if(whichbt == DLG_NEGATIVE_BT){
+						BrowsLocalFileTask.setNativeCurrPath(new File(""));
+                    	BrowsLocalFileTask.getadapter().setSelectItem(-1);
+					}else if(whichbt == DLG_NEUTRAL_BT){
+						
+					}else if(whichbt == DLG_POSITIVE_BT){
+                    	File f = new File(BrowsLocalFileTask.getNativeCurrPath());
+                    	if(f.isFile()){
+							Init.th.GetMessageHander().post(new uploadrunning(
+									SmbOpApi.getSmbFileByUrl((SelectedItem == null ? CurrPath : SelectedItem.getPath()) + f.getName()), 
+									BrowsLocalFileTask.getNativeCurrPath()));
+							SelectedItem = null;
+                    	}else{
+                    		ExchangeHandler.GetExchangeHandlerInstance().sendMessage(
+                    				GeneralHandler.MsgElement(ExchangeHandler.MSG_SHOW_TOAST, mContext.getString(R.string.file_only)));
+                    	}
+					}
+					break;
+				case MENU_NEW_FOLDER_ID:
+					if(whichbt == DLG_NEGATIVE_BT){
+						
+					}else if(whichbt == DLG_NEUTRAL_BT){
+						
+					}else if(whichbt == DLG_POSITIVE_BT){
+						SmbFile newfolder = SmbOpApi.getSmbFileByUrl(
+							(SelectedItem == null ? CurrPath : SelectedItem.getPath()) + ((EditText)(args[0])).getText().toString().trim());
+						if(!"".equals(((EditText)(args[0])).getText().toString().trim())){
+							if(!GeneralUtil.isInvalidName(((EditText) (args[0])).getText().toString().trim())){
+								ExchangeHandler.GetExchangeHandlerInstance().sendMessage(GeneralHandler.MsgElement(ExchangeHandler.MSG_SHOW_TOAST,
+										 SmbOpApi.mkdir(mContext, newfolder)) );
+								searchFile(CurrPath);
+							}else{
+								ExchangeHandler.GetExchangeHandlerInstance().sendMessage(GeneralHandler.MsgElement(ExchangeHandler.MSG_SHOW_TOAST, mContext.getString(R.string.illegal_char)));
+							}
+						}else{
+							ExchangeHandler.GetExchangeHandlerInstance().sendMessage(GeneralHandler.MsgElement(ExchangeHandler.MSG_SHOW_TOAST, mContext.getString(R.string.dir_not_create)));
+						}
+						SelectedItem = null;
+					}
+					break;
+				default:
+					break;
+				}
+			}
+		};
+
+		return l;
+	}
+
+	class pasterunning implements Runnable{
+		SmbFile param;
+		Runnable r;
+		pasterunning(SmbFile pm){
+			param = pm;
+		}
+
+		@Override
+		public void run() {
+			synchronized (Init.obLock) {
+				r = this;
+				paste(param,r);
+				searchFile(CurrPath);
+				SelectedItem = null;
+			}
+		}
+	}
+
+	public static String pst_folder(SmbFile src, final SmbFile des){
+		String result = "";
+		
+		try {
+					if(SmbOpApi.isDir(src)){
+						if(!SmbOpApi.exists(des)){
+							SmbOpApi.mkdir(mContext, des);
+						}
+						
+						SmbFile[] list = src.listFiles();
+						if(list == null){
+							return mContext.getString(R.string.no_access);
+						}else if(list.length != 0){
+							for(SmbFile l : list){
+								result = pst_folder(l, SmbOpApi.getSmbFileByUrl(des.getPath() + l.getName()));
+							}
+							if(SmbOpApi.CopyorCut_flag == 1){
+								SmbFile[] ls = src.listFiles();
+								if(ls.length == 0){
+									src.delete();
+								}
+							}
+						}else{
+							result =  mContext.getString((SmbOpApi.CopyorCut_flag == 1 ? R.string.paste_success : R.string.paste_success),
+									SmbOpApi.CopyorCut_buffer.getName());
+							if(SmbOpApi.CopyorCut_flag == 1){
+								src.delete();
+							}
+						}
+						
+					}else{
+						if(!SmbOpApi.cancel_fail_dlg) {
+							do {
+								result = SmbOpApi.pst(mContext, src, des);
+								if("".equals(result)){
+									ExchangeHandler.GetExchangeHandlerInstance().sendMessage(
+											GeneralHandler.MsgElement(ExchangeHandler.MSG_SHOW_RETRY_DLG, des.getName(), ProgressDialog.STYLE_HORIZONTAL));
+									
+									ExchangeHandler.GetExchangeHandlerInstance().getSynclock().waitfor();
+								}
+							}while(SmbOpApi.getAppendFlg());
+						}else{
+							result = mContext.getString(android.R.string.cancel) + "!";
+						}
+					}
+		} catch (SmbException e) {
+			Log.d("abc","src list Error: " + e);
+		}
+		return result;
+	}
+	
+	
+	void paste(SmbFile des, Runnable r){
+		String toast = "";
+		SmbFile src = SmbOpApi.CopyorCut_buffer;
+		
+			if(!src.toString().equals(des.getParent())){
+				ExchangeHandler.GetExchangeHandlerInstance().showProgressDialog(mContext.getString(R.string.pastting), ProgressDialog.STYLE_HORIZONTAL);
+				toast = pst_folder(src, des);
+				ExchangeHandler.GetExchangeHandlerInstance().sendMessage(
+						GeneralHandler.MsgElement(ExchangeHandler.MSG_DISMISS_PROGRESS_DLG, null));
+				ExchangeHandler.GetExchangeHandlerInstance().sendMessage(GeneralHandler.MsgElement(ExchangeHandler.MSG_SHOW_TOAST, toast));
+			}else{
+				ExchangeHandler.GetExchangeHandlerInstance().sendMessage(GeneralHandler.MsgElement(ExchangeHandler.MSG_SHOW_TOAST, mContext.getString(R.string.illegal_paste)));
+			}
+			SmbOpApi.CopyorCut_buffer = null;
+			SmbOpApi.CopyorCut_flag = -1;
+			SmbOpApi.cancel_fail_dlg = false;
+	}
+	
+	class downloadrunning implements Runnable{
+		SmbFile seletcedfile;
+		String target_folder;
+		Runnable r;
+		downloadrunning(SmbFile seletcedfile, String target_folder){
+			this.seletcedfile = seletcedfile;
+			this.target_folder = target_folder;
+		}
+
+		@Override
+		public void run() {
+			synchronized (Init.obLock) {
+				r = this;
+				download(seletcedfile, target_folder, r);
+			}
+		}
+	}
+	
+	void download(SmbFile seletcedfile, String target_folder,Runnable r){
+		String toast = "";
+		
+		do{
+			ExchangeHandler.GetExchangeHandlerInstance().showProgressDialog(mContext.getString(R.string.downloading,seletcedfile.getName()), ProgressDialog.STYLE_HORIZONTAL);
+			
+			toast = SmbOpApi.dl(mContext, seletcedfile,target_folder); 
+			
+			ExchangeHandler.GetExchangeHandlerInstance().sendMessage(
+					GeneralHandler.MsgElement(ExchangeHandler.MSG_DISMISS_PROGRESS_DLG, null));
+			if(!"".equals(toast)){
+					ExchangeHandler.GetExchangeHandlerInstance().sendMessage(GeneralHandler.MsgElement(ExchangeHandler.MSG_SHOW_TOAST,toast));
+			}else{
+				ExchangeHandler.GetExchangeHandlerInstance().sendMessage(
+						GeneralHandler.MsgElement(ExchangeHandler.MSG_SHOW_RETRY_DLG, seletcedfile.getName(), ProgressDialog.STYLE_HORIZONTAL));
+				
+				ExchangeHandler.GetExchangeHandlerInstance().getSynclock().waitfor();
+			}
+		}while(SmbOpApi.getAppendFlg());
+	}
+	
+	class uploadrunning implements Runnable{
+		SmbFile savedfile;
+		String pickedfie;
+		Runnable r;
+		uploadrunning(SmbFile savedfile, String pickedfie){
+			this.savedfile = savedfile;
+			this.pickedfie = pickedfie;
+		}
+
+		@Override
+		public void run() {
+			synchronized (Init.obLock) {
+				r = this;
+				upload(savedfile, pickedfie, r);
+				searchFile(CurrPath);
+			}
+		}
+	}
+	
+	void upload(SmbFile savedfile, String pickedfie, Runnable r){
+		String toast = "";
+		
+		do{
+			ExchangeHandler.GetExchangeHandlerInstance().showProgressDialog(mContext.getString(R.string.uploading, savedfile.getName()), ProgressDialog.STYLE_HORIZONTAL);
+			
+			toast = SmbOpApi.up(mContext, savedfile,pickedfie); 
+			ExchangeHandler.GetExchangeHandlerInstance().sendMessage(
+					GeneralHandler.MsgElement(ExchangeHandler.MSG_DISMISS_PROGRESS_DLG, null));
+			
+			if(!"".equals(toast)){
+					ExchangeHandler.GetExchangeHandlerInstance().sendMessage(GeneralHandler.MsgElement(ExchangeHandler.MSG_SHOW_TOAST,toast));
+			}else{
+				ExchangeHandler.GetExchangeHandlerInstance().sendMessage(
+						GeneralHandler.MsgElement(ExchangeHandler.MSG_SHOW_RETRY_DLG, savedfile.getName(), ProgressDialog.STYLE_HORIZONTAL));
+				
+				ExchangeHandler.GetExchangeHandlerInstance().getSynclock().waitfor();
+			}
+		}while(SmbOpApi.getAppendFlg());
+	}
+	
+	class cachefilerunning implements Runnable{
+		SmbFile seletcedfile;
+		String mimetype;
+		Context context;
+		Runnable r;
+		cachefilerunning(Context context, SmbFile seletcedfile, String mimetype){
+			this.seletcedfile = seletcedfile;
+			this.mimetype = mimetype;
+			this.context = context;
+		}
+
+		@Override
+		public void run() {
+			synchronized (Init.obLock) {
+				r = this;
+				cachefile(context, seletcedfile, SmbOpApi.tmpdir , mimetype, r);
+				
+			}
+		}
+	}
+	
+	void cachefile(Context context, SmbFile seletcedfile, String target_folder, String mimetype, Runnable r){
+		String toast = "";
+		
+		do{
+			ExchangeHandler.GetExchangeHandlerInstance().showProgressDialog(mContext.getString(R.string.caching, seletcedfile.getName()), ProgressDialog.STYLE_HORIZONTAL);
+			toast = SmbOpApi.dl(mContext, seletcedfile, target_folder); 
+			
+			ExchangeHandler.GetExchangeHandlerInstance().sendMessage(
+					GeneralHandler.MsgElement(ExchangeHandler.MSG_DISMISS_PROGRESS_DLG, null));
+			if(!"".equals(toast)){
+					ExchangeHandler.GetExchangeHandlerInstance().sendMessage(GeneralHandler.MsgElement(ExchangeHandler.MSG_SHOW_TOAST,toast));
+			}else{
+				ExchangeHandler.GetExchangeHandlerInstance().sendMessage(
+						GeneralHandler.MsgElement(ExchangeHandler.MSG_SHOW_RETRY_DLG, seletcedfile.getName(), ProgressDialog.STYLE_HORIZONTAL));
+				
+				ExchangeHandler.GetExchangeHandlerInstance().getSynclock().waitfor();
+			}
+		}while(SmbOpApi.getAppendFlg());
+
+		if(toast.contains("Success") || toast.contains("成功")){
+			OpenFile(context, target_folder+seletcedfile.getName(), mimetype);
+		}
+	}
+	
+	void OpenFile(Context context, String target_file, String mimetype){
+		File file = new File(target_file);
+		
+		Intent intent = new Intent(android.content.Intent.ACTION_VIEW);
+		Uri uri = Uri.fromFile(file);
+		intent.setDataAndType(uri, mimetype);
+		try {
+			context.startActivity(intent);
+		} catch (ActivityNotFoundException e) {
+			ExchangeHandler.GetExchangeHandlerInstance().sendMessage(GeneralHandler.MsgElement(ExchangeHandler.MSG_SHOW_TOAST, 
+					mContext.getString(R.string.unknow_file)));
+	    }
+	}
+	
+	String CheckSmbFileExist(String target_dir, String clip_file){
+		String tmpstr = "";
+		if(!SmbOpApi.exists(SmbOpApi.getSmbFileByUrl(target_dir+clip_file))){
+			return clip_file;
+		}
+		
+		tmpstr = mContext.getString(R.string.copied_file_name, clip_file);
+		if(!SmbOpApi.exists(SmbOpApi.getSmbFileByUrl(target_dir+ tmpstr))){
+			return tmpstr;
+		}
+		
+        
+        for (int copyIndex = 2; copyIndex < 500;  copyIndex++ ) {
+    		tmpstr = mContext.getString(R.string.copied_file_name_2, copyIndex, clip_file);
+    		if(!SmbOpApi.exists(SmbOpApi.getSmbFileByUrl(target_dir+ tmpstr))){
+    			return tmpstr;
+    		}
+        }
+        return "";
+	}
+	
+	class deleteunning implements Runnable{
+		deleteunning(){
+		}
+
+		@Override
+		public void run() {
+			synchronized (Init.obLock) {
+				delete();
+			}
+		}
+	}
+	
+	void delete(){
+		if(SelectedItem != null){
+			ExchangeHandler.GetExchangeHandlerInstance().showProgressDialog(
+					mContext.getString(R.string.uploading, SelectedItem.getText()), ProgressDialog.STYLE_SPINNER);
+			
+			ExchangeHandler.GetExchangeHandlerInstance().sendMessage(GeneralHandler.MsgElement(ExchangeHandler.MSG_SHOW_TOAST, 
+					SmbOpApi.delete(mContext, SmbOpApi.getSmbFileByUrl(SelectedItem.getPath()))));
+			
+			ExchangeHandler.GetExchangeHandlerInstance().sendMessage(
+					GeneralHandler.MsgElement(ExchangeHandler.MSG_DISMISS_PROGRESS_DLG, null));
+			
+			searchFile(CurrPath);
+			SelectedItem = null;
+		}else{
+			ExchangeHandler.GetExchangeHandlerInstance().sendMessage(GeneralHandler.MsgElement(ExchangeHandler.MSG_SHOW_TOAST, 
+					mContext.getString(R.string.reopt)));
+		}
+	}
+	
+	class renameunning implements Runnable{
+		Object[] args;
+		renameunning(Object...args){
+			this.args = args;
+		}
+
+		@Override
+		public void run() {
+			synchronized (Init.obLock) {
+				rename(args);
+			}
+		}
+	}
+	
+	void rename(Object args[]){
+		if(SelectedItem != null){
+			if(!GeneralUtil.isInvalidName(((EditText) (args[0])).getText().toString().trim())){
+			ExchangeHandler.GetExchangeHandlerInstance().sendMessage(GeneralHandler.MsgElement(ExchangeHandler.MSG_SHOW_TOAST, 
+					SmbOpApi.rename(mContext, SmbOpApi.getSmbFileByUrl(SelectedItem.getPath()),
+                			SmbOpApi.getSmbFileByUrl(CurrPath+ ((EditText) (args[0])).getText().toString().trim()))));
+			searchFile(CurrPath);
+			}else{
+				ExchangeHandler.GetExchangeHandlerInstance().sendMessage(GeneralHandler.MsgElement(ExchangeHandler.MSG_SHOW_TOAST, 
+						mContext.getString(R.string.rename_illegal)));
+			}
+			SelectedItem = null;
+		}else{
+			ExchangeHandler.GetExchangeHandlerInstance().sendMessage(GeneralHandler.MsgElement(ExchangeHandler.MSG_SHOW_TOAST, 
+					mContext.getString(R.string.reopt)));
+		}
+	}
+	
+	public void BackUpdate(){
+		searchFile(CurrPath);
+	}
+	
+    class NameLengthFilter implements InputFilter {
+    	public static final int NAME_MAX_LENGTH = 255;
+        public static final int FILE_PATH_MAX_LENGTH = 259;
+        public static final int FOLDER_PATH_MAX_LENGTH = 247;
+        private final String TAG = "NameLengthFilter";
+        private Context _mCtx = null;
+        private int _mMax = 0;
+
+        public NameLengthFilter(int len) {
+            _mMax = len;
+        }
+
+        public NameLengthFilter(Context ctx, int len) {
+            if (ctx == null) {
+                Log.e(TAG, "NameLengthFilter()-error: ctx is null");
+                return;
+            }
+            _mCtx = ctx;
+            _mMax = len;
+        }
+
+        public CharSequence filter(CharSequence source, int start, int end,
+                Spanned dest, int dstart, int dend) {
+            int keep = _mMax
+                    - (dest.toString().getBytes().length - dest
+                            .subSequence(dstart, dend).toString().getBytes().length);
+            if (keep <= 0) {
+                if (_mCtx != null) {
+                	ExchangeHandler.GetExchangeHandlerInstance().sendMessage(GeneralHandler.MsgElement(ExchangeHandler.MSG_SHOW_TOAST, 
+                			mContext.getString(R.string.input_max)));
+                }
+                return "";
+            } else if (keep >= source.subSequence(start, end).toString()
+                    .getBytes().length) {
+                return null; 
+            } else {
+                for (int i = keep / 3; i <= (end - start); i++) {
+                    if (keep < source.subSequence(start, start + i).toString()
+                            .getBytes().length) {
+                        keep = i - 1;
+                        break;
+                    }
+                }
+                if (keep < 0)
+                    keep = 0;
+                if (_mCtx != null) {
+        			ExchangeHandler.GetExchangeHandlerInstance().sendMessage(GeneralHandler.MsgElement(ExchangeHandler.MSG_SHOW_TOAST, 
+        					mContext.getString(R.string.input_max)));
+                }
+                return source.subSequence(start, start + keep);
+            }
+        }
+    }
+    
+    Button.OnClickListener  getButtonListener(){
+    	Button.OnClickListener l = new Button.OnClickListener() {
+			@Override
+			public void onClick(View arg0) {
+				switch(arg0.getId()){
+				case R.id.exit_bt:
+					SmbListActivity.this.finish();
+					break;
+				case R.id.newfolder_bt:
+					SelectedItem = null;
+					showDialog(MENU_NEW_FOLDER_ID);
+					break;
+				case R.id.upload_bt:
+					showDialog(MENU_UPLOAD_ID);
+					break;
+				case R.id.backup_bt:
+					 new Backup(mContext);
+					break;
+				default:
+					break;
+				}
+			}
+	    };
+	    return l;
+    }
+    
+    boolean IsMaxPath(SmbFile sbf){
+    	Log.d("abc","sbf path = " + sbf.getPath());
+    	String path = sbf.getPath();
+    	String subpath = "";
+    	if(SmbOpApi.isFile(sbf)){
+    		subpath  = path.substring(path.indexOf("@")+1);
+    		int len = subpath.length()+2 + (SelectedItem == null ? SmbOpApi.getSmbFileByUrl(CurrPath).getName().length() : SelectedItem.getText().length());
+    		if(NameLengthFilter.FILE_PATH_MAX_LENGTH < len){
+    			return true;
+    		}
+    	}else{
+    		try {
+					path = sbf.getPath();
+					subpath  = path.substring(path.indexOf("@")+1);
+					Log.d("abc","subpath dir len  = " + subpath.length());
+					int len =  subpath.length()+2 + (SelectedItem == null ? SmbOpApi.getSmbFileByUrl(CurrPath).getName().length() : SelectedItem.getText().length());
+					if(NameLengthFilter.FOLDER_PATH_MAX_LENGTH < len){
+						return true;
+					}
+
+					SmbFile[] fs = sbf.listFiles();
+				
+					for(SmbFile f : fs){
+						if(true == IsMaxPath(f)){
+							return true;
+						}
+					}
+				
+			} catch (SmbException e) {
+				Log.d(SmbOpApi.TAG,"IsMaxPath Error: " + e.getMessage());
+			}
+    	}
+    	
+    	return false;
+    }
+}

@@ -1,0 +1,31 @@
+package com.uninet.xiaoyou;
+
+/**
+ * 全局工具类
+ * 
+ * @author chenggong
+ * 
+ */
+public final class Utility {
+
+	// 全局log开关
+	static public final boolean logable = true;
+	static public final String TAG = "cgcgcg";
+
+	// 主服务器地址
+	static public final String server_addr = "192.168.0.111";
+	// 主服务器端口
+	static public final int server_port = 8090;
+
+	static public final int register = 0;
+	static public final int login = 1;
+	static public final int update_pword = 2;
+	static public final int switch_to_pppoe = 3;
+	static public final int get_pppoe_info = 4;
+	static public final int get_wifista_info = 5;
+	static public final int switch_to_wifista = 6;
+	static public final int get_wifista_list = 7;
+	static public final int get_ssid_info = 8;
+	static public final int set_ssid_info = 9;
+	static public final int soft_version = 6;
+}

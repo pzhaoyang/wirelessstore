@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/LinearLayout1"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <LinearLayout
+        android:id="@+id/LinearLayout_title"
+        android:layout_width="match_parent"
+        android:layout_height="50dp" >
+
+        <TextView
+            android:id="@+id/function_election"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_horizontal|center_vertical"
+            android:text="@string/function_election"
+            android:textSize="20sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/LinearLayout_wireless_stroage"
+        android:layout_width="match_parent"
+        android:layout_height="50dp" >
+
+        <Button
+            android:id="@+id/wireless_stroage"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="@string/wireless_stroage" />
+    </LinearLayout>
+
+    <!-- 
+    <LinearLayout
+        android:id="@+id/LinearLayout_remotecontrol"
+        android:layout_width="match_parent"
+        android:layout_height="50dp" >
+
+        <Button
+            android:id="@+id/remotecontrol"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="@string/remotecontrol" />
+    </LinearLayout>
+    -->
+
+    <LinearLayout
+        android:id="@+id/LinearLayout_devicemanager"
+        android:layout_width="match_parent"
+        android:layout_height="50dp" >
+
+        <Button
+            android:id="@+id/device_manager"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:text="@string/route_manager" />
+    </LinearLayout>
+
+</LinearLayout>

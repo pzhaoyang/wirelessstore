@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical" >
+
+  
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            
+            android:orientation="vertical" >
+
+            <TextView
+                android:id="@+id/air_show"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#000000"
+                android:background="@drawable/btn_normal"
+                android:textSize="60sp" />
+
+            
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            
+            android:orientation="vertical" >
+
+            <TextView
+                android:id="@+id/air_code"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textColor="#000000"
+                android:background="@drawable/btn_normal"
+                android:textSize="60sp" />
+           
+        </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:gravity="center"
+        android:orientation="horizontal" >
+
+        <Button
+            android:id="@+id/b_power"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/air_power"
+            android:textColor="#000000"
+             />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal" >
+
+        <Button
+            android:id="@+id/b_tempadd"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+                        android:textColor="#000000"
+            android:text="@string/air_tempadd" />
+
+        <Button
+            android:id="@+id/b_airmode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+                        android:textColor="#000000"
+            android:text="@string/air_mode" />
+
+        <Button
+            android:id="@+id/b_tempsub"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+                        android:textColor="#000000"
+            android:text="@string/air_tempsub" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        android:gravity="center"
+        android:orientation="horizontal" >
+
+        <Button
+            android:id="@+id/b_wind_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+                        android:textColor="#000000"
+            android:text="@string/air_wind_count" />
+
+        <Button
+            android:id="@+id/b_wind_dir"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+                        android:textColor="#000000"
+            android:text="@string/air_wind_dir" />
+
+        <Button
+            android:id="@+id/b_wind_auto_dir"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+                        android:textColor="#000000"
+            android:text="@string/air_wind_auto_dir" />
+    </LinearLayout>
+  <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            
+            android:orientation="vertical" >
+
+            <TextView
+                android:id="@+id/air_remote_data"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#000000"
+                
+                android:textSize="60sp" />
+
+            
+        </LinearLayout>
+   
+       
+</LinearLayout>

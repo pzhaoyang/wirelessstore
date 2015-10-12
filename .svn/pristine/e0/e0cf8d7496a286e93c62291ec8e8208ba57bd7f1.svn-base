@@ -1,0 +1,123 @@
+package com.uninet.xiaoyou.wirelessstore;
+
+import java.io.File;
+
+import jcifs.smb.SmbFile;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
+import android.os.Handler;
+
+public class Backup{
+
+	private String bak_path;
+	private Context mcontext;
+	private Handler uihandler;
+	
+	
+	private String tb = "bkinfo";
+	private String FILE_NAME = "filename";
+	private String FILE_SIZE = "size";
+	private String FILE_TIME = "modifytime";
+	private String FILE_BAKED = "backuped";
+	BackupDatabaseHelper bdh;
+	public Backup(Context context,Handler handler) {
+		mcontext = context;
+		uihandler = handler;
+		bak_path = getBakpath();
+		if("".equals(bak_path)){
+			showErrorDlg(context);
+		}else{
+			bdh = new BackupDatabaseHelper(mcontext, "backup.db", null, 1);
+			
+			bdh.CreateTable(tb, FILE_NAME + " varchar primary key,"
+					+ FILE_SIZE + " varchar,"
+					+ FILE_TIME +" char(13),"
+					+ FILE_BAKED + " char(4)");
+			SaveFileInfo();
+			CleanIValidData();
+			UpdateFieldValue(FILE_NAME,"/storage/sdcard0/Music/gyhh.docxDbgview.zip",FILE_BAKED,"'1'");
+			UploadFiles();
+		}
+	}
+
+	private String getBakpath(){
+		return mcontext.getSharedPreferences("smburlinfo", 0).getString("bak_path","");
+	}
+	
+
+	private void showErrorDlg(Context context){
+		new AlertDialog.Builder(context)
+		.setTitle("错误")
+        .setMessage("请先设置需要备份的目录!")
+        .setNegativeButton(android.R.string.cancel,
+                new OnClickListener() {
+                    public void onClick(DialogInterface dialog,
+                            int which) {
+                    }
+                }).create().show();
+	}
+	
+	private void SaveFileInfo(){
+		File file = new File(bak_path);
+		File[] fs = file.listFiles();
+		for(File f:fs){
+			String condition = FILE_NAME + "=" + "'" + f.getPath() + "'";
+			String val = 
+					  "'" + f.getPath().toString() + "'"
+					+ ","
+					+ "'" + f.length() + "'"
+					+ ","
+					+ "'" + f.lastModified() + "'"
+					+ ","
+					+ '0';
+			//插入新记录
+			if(!bdh.Query(tb,condition)){
+				bdh.Inser(tb,/*FILE_NAME + "," + FILE_SIZE + "," + FILE_TIME + "," + FILE_BAKED,*/ val);
+			}
+		}
+	}
+	
+	private void CleanIValidData(){
+		String[] fn = bdh.QueryField(tb,FILE_NAME);
+		for(int i= 0; i<fn.length; i++){
+			File f = new File(fn[i]);
+			if(!f.exists()){
+				bdh.DeletRecord(tb,FILE_NAME+"="+"'" + fn[i] + "'");
+			}
+		}
+	}
+	
+	private void UpdateFieldValue(String pkField, String pkvalue,String Field, String value){
+		String sql = Field + "=" + value + " where " + pkField + "=" + "'" + pkvalue + "'";
+		bdh.UpdateFieldValue(tb,sql);
+	}
+	
+	private String[] GetFilelistFromDB(){
+		return bdh.QueryField(tb,FILE_NAME);
+	}
+	
+	private void UploadFiles(){
+		String[] filelist = GetFilelistFromDB();
+		String dir = CreateBakDir();
+		for(int i=0; i< filelist.length; i++){
+			File f = new File(filelist[i]);
+			SmbOpApi.upload(mcontext,
+				uihandler,
+				SmbOpApi.TOAST_MSG_SHOW,
+				SmbOpApi.getSmbFileByUrl(dir + f.getName()),
+				filelist[i]);
+		}
+	}
+	
+	private String CreateBakDir(){
+		String dir = "bak/";
+		SmbFile f  = SmbOpApi.getSmbFileByUrl(SmbOpApi.getSmbRoot(mcontext,SmbOpApi.ip) + "106/" /*for test*/+ dir);
+		SmbOpApi.mkdir(f);
+		return f.getPath();
+	}
+}
+
+
+

@@ -1,0 +1,160 @@
+package com.uninet.xiaoyou.net;
+
+import org.json.JSONException;
+
+
+public class PostToRemote {
+	/**
+	 * 与路由交互部分
+	 */
+
+	/**
+	 * 
+	 */
+	public static void setDeviceName() {
+		DataInteractionThread.path = "/app/setDeviceName";
+		DataInteractionThread.isWithAuthorization = true;
+		DataInteractionThread.ispost = true;
+	}
+
+	/**
+	 * 设置百度云
+	 * 
+	 * @param username
+	 * @param password
+	 */
+	public static void setBaiduCloud(String opened, String username, String password) {
+		DataInteractionThread.path = "/app/setBaiduCloud";
+		DataInteractionThread.isWithAuthorization = true;
+		DataInteractionThread.ispost = true;
+		try {
+			DataInteractionThread.postmsg.put("baiducloud_opened", opened);
+			DataInteractionThread.postmsg.put("baiducloud_username", username);
+			DataInteractionThread.postmsg.put("baiducloud_password", password);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * 设置USB模式
+	 * 
+	 * @param usb_mode
+	 */
+	public static void setUsbmode(String usb_mode) {
+		DataInteractionThread.path = "/app/setUsbmode";
+		DataInteractionThread.isWithAuthorization = true;
+		DataInteractionThread.ispost = true;
+		try {
+			DataInteractionThread.postmsg.put("usb_mode", usb_mode);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * 设置WIFI Ssid
+	 * 
+	 * @param ssid
+	 *            wifi ssid
+	 * @param type
+	 *            密码类型
+	 * @param password
+	 *            wifi密码
+	 */
+	public static void setSsid(String ssid, String type, String password) {
+		DataInteractionThread.path = "/app/setSsid";
+		DataInteractionThread.isWithAuthorization = true;
+		DataInteractionThread.ispost = true;
+		try {
+			DataInteractionThread.postmsg.put("ssid", ssid);
+			DataInteractionThread.postmsg.put("type", type);
+			DataInteractionThread.postmsg.put("password", password);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * 设置wifi穿墙模式
+	 * 
+	 * @param wifipower
+	 */
+	public static void setWifipower(String wifipower) {
+		DataInteractionThread.path = "/app/setWifipower";
+		DataInteractionThread.isWithAuthorization = true;
+		DataInteractionThread.ispost = true;
+		try {
+			DataInteractionThread.postmsg.put("wifipower", wifipower);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * 设置wifi工作模式
+	 */
+	public static void setWifimode(String mode) {
+		DataInteractionThread.path = "/app/setWifimode";
+		DataInteractionThread.isWithAuthorization = true;
+		DataInteractionThread.ispost = true;
+		try {
+			DataInteractionThread.postmsg.put("wifi_mode", mode);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * OTA升级
+	 * 
+	 * @param image_data
+	 */
+	public static void otaUpgrade(Object image_data) {
+		DataInteractionThread.path = "/app/otaUpgrade";
+		DataInteractionThread.isWithAuthorization = true;
+		DataInteractionThread.ispost = true;
+	}
+
+	/**
+	 * 
+	 */
+	public static void setHostName() {
+		DataInteractionThread.path = "/app/setHostName";
+		DataInteractionThread.isWithAuthorization = true;
+		DataInteractionThread.ispost = true;
+	}
+	
+	/**
+	 * 与服务器交互部分
+	 */
+	
+	/**
+	 * 服务器注册
+	 */
+	public static void server_regist(String uname, String pword){
+		DataInteractionThread.path = "/server/regist";
+		DataInteractionThread.isWithAuthorization = false;
+		DataInteractionThread.ispost = true;
+		try {
+			DataInteractionThread.postmsg.put("uname", uname);
+			DataInteractionThread.postmsg.put("pword", pword);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * 服务器修改密码
+	 */
+	public static void server_update_password(String pword_new){
+		DataInteractionThread.path = "/server/update";
+		DataInteractionThread.isWithAuthorization = false;
+		DataInteractionThread.ispost = true;
+		try {
+			DataInteractionThread.postmsg.put("pword_new", pword_new);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+	}
+}

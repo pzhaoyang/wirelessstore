@@ -1,0 +1,103 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.uninet.xiaoyou.XiaoYouActivity"
+    tools:ignore="MergeRootFrame" >
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="66dp"
+        android:gravity="center"
+        android:text="@string/app_name"
+        android:textSize="40sp" />
+
+    <!-- <EditText
+        android:id="@+id/input_username"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/title"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="38dp"
+        android:ems="10"
+        android:hint="@string/username"
+        android:inputType="text" /> -->
+
+    <TextView
+        android:id="@+id/version"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="18dp" />
+
+    <TextView
+        android:id="@+id/warning"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/title"
+        android:layout_centerHorizontal="true"
+        android:textColor="#ffff0000" />
+
+    <CheckBox
+        android:id="@+id/showpassword"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignRight="@+id/warning"
+        android:layout_below="@+id/input_password"
+        android:text="@string/showpassword" />
+
+    <CheckBox
+        android:id="@+id/auto_login"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/showpassword"
+        android:layout_marginTop="20dp"
+        android:layout_toRightOf="@+id/showpassword"
+        android:text="@string/auto_login"
+        android:textSize="12sp" />
+
+    <CheckBox
+        android:id="@+id/rember_password"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/auto_login"
+        android:layout_alignBottom="@+id/auto_login"
+        android:layout_alignLeft="@+id/showpassword"
+        android:text="@string/remerber_password"
+        android:textSize="12sp" />
+
+    <!-- <Button
+        android:id="@+id/register"
+        android:layout_width="130dp"
+        android:layout_height="wrap_content"
+        android:layout_alignRight="@+id/rember_password"
+        android:layout_below="@+id/rember_password"
+        android:text="@string/register" /> -->
+
+    <EditText
+        android:id="@+id/input_password"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/warning"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="28dp"
+        android:ems="10"
+        android:hint="@string/password"
+        android:inputType="textPassword" />
+
+    <Button
+        android:id="@+id/login"
+        android:layout_width="130dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/auto_login"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="20dp"
+        android:text="@string/login" />
+
+</RelativeLayout>

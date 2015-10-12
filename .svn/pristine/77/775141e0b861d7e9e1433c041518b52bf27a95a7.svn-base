@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:ui="http://schemas.android.com/apk/res/com.uninet.xiaoyou"
+    android:id="@+id/main_view"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+   android:background="@drawable/bg"
+    android:orientation="vertical" >
+ 
+    <TabHost
+        android:id="@android:id/tabhost"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" >
+
+        <LinearLayout
+            android:id="@+id/gallerylayout"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:orientation="vertical" >
+
+            <HorizontalScrollView
+                android:id="@+id/hs"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="none" >
+
+                <TabWidget
+                    android:id="@android:id/tabs"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" >
+                </TabWidget>
+            </HorizontalScrollView>
+
+            <FrameLayout
+                android:id="@android:id/tabcontent"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+      
+    </TabHost>
+     
+   
+   
+  <SlidingDrawer  
+        android:id="@+id/sliding"  
+        android:layout_width="wrap_content"  
+        android:layout_height="wrap_content"  
+        android:content="@+id/menu_content"  
+        android:handle="@+id/imageViewIcon"  
+        android:orientation="vertical" >  
+      
+	       
+        <Button  
+            android:id="@+id/imageViewIcon"  
+            android:layout_width="match_parent"  
+            android:layout_height="wrap_content"  
+            android:background="@drawable/btn_special"
+            android:textColor="@color/btntextcolor"
+            android:text="@string/menu_settings" />    
+         
+        <LinearLayout
+            android:id="@+id/menu_content"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg"
+            android:orientation="vertical" >    
+       
+            
+             <com.uninet.xiaoyou.remotecontrol.ui.widget.UIButton
+	          android:id="@+id/menu_options" 
+	          android:layout_marginTop="20dp"
+	          android:layout_width="fill_parent"
+	           android:layout_height="wrap_content"
+	          ui:title ="@string/options"
+	          ui:image="@drawable/menu_list"
+	          />      
+	             <com.uninet.xiaoyou.remotecontrol.ui.widget.UIButton
+	          android:id="@+id/menu_study" 
+	            android:layout_width="fill_parent"
+	             android:layout_height="wrap_content"
+	          android:layout_marginTop="20dp"
+	           ui:title ="@string/study"
+	          ui:image="@drawable/menu_learn"
+	        />   
+	             <com.uninet.xiaoyou.remotecontrol.ui.widget.UIButton
+	          android:id="@+id/menu_about" 
+	            android:layout_width="fill_parent"
+	             android:layout_height="wrap_content"
+	          android:layout_marginTop="20dp"
+	           ui:title ="@string/about"
+	          ui:image="@drawable/menu_about"
+	        />   
+	             <com.uninet.xiaoyou.remotecontrol.ui.widget.UIButton
+	          android:id="@+id/menu_quit" 
+	            android:layout_width="fill_parent"
+	             android:layout_height="wrap_content"
+	          android:layout_marginTop="20dp"
+	           ui:title ="@string/quit"
+	          ui:image="@drawable/menu_quit"
+	         />              
+	     
+		</LinearLayout>	
+    </SlidingDrawer>  
+</RelativeLayout>

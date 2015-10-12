@@ -1,0 +1,28 @@
+package com.uninet.xiaoyou;
+
+/**
+ * 全局工具类
+ * @author chenggong
+ *
+ */
+public class Utility {
+	
+	// 全局log开关
+	static public final boolean logable = true;
+	static public final String TAG = "cgcgcg";
+	
+	// 主服务器地址
+	static public final String server_addr = "192.168.0.111";
+	// 主服务器端口
+	static public final int server_port = 8090;
+	// 自动更新服务器地址
+	static public final String update_server_addr = "http://27.115.113.62/";
+	// 服务器记录版本号文件名
+	static public final String update_xml = "app_version.xml";
+	
+	// 注册
+	static public final int register = 0;
+	// 登录
+	static public final int login = 1;
+
+}

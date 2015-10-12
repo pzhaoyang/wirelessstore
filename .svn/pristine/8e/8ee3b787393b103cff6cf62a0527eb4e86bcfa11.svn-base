@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.uninet.xiaoyou"
+    android:versionCode="1"
+    android:versionName="1.0" >
+
+    <uses-sdk
+        android:minSdkVersion="14"
+        android:targetSdkVersion="19" />
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name" >
+        <!-- 入口 -->
+        <activity
+            android:name="com.uninet.xiaoyou.XiaoYouActivity"
+            android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <!-- 注册 -->
+        <activity
+            android:name="RegisterActivity"
+            android:label="@string/register" >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="com.unipro.remotecontrol.RegisterActivity" />
+            </intent-filter>
+        </activity>
+        <!-- 功能选择 -->
+        <activity
+            android:name="FunctionSelectionActivity"
+            android:label="@string/function_election">
+            <intent-filter >
+                <action android:name="android.intent.action.VIEW" />
+            </intent-filter>
+        </activity>
+        <!-- 设备管理 -->
+        <activity
+            android:name="com.uninet.xiaoyou.devicemanager.DeviceManagerActivity"
+            android:label="@string/device_manager">
+            <intent-filter >
+                <action android:name="android.intent.action.VIEW" />
+            </intent-filter>
+        </activity>
+        <!-- 网络信息 -->
+        <activity
+            android:name="NetworkInfoActivity"
+            android:label="@string/network_info">
+            <intent-filter >
+                <action android:name="android.intent.action.VIEW" />
+            </intent-filter>
+        </activity>
+        <!-- 无线存储 -->
+        <activity
+            android:name="com.uninet.xiaoyou.wirelessstore.WirelesstoreActivity"
+            android:label="@string/app_name" >
+        </activity>
+        <activity
+            android:name="com.uninet.xiaoyou.wirelessstore.SmbListActivity"
+            android:label="@string/title_activity_list" >
+        </activity>
+        <activity
+            android:name="com.uninet.xiaoyou.wirelessstore.WirelessSettingActivity"
+            android:label="@string/title_activity_wireless_setting" >
+        </activity>
+ 		<service android:name=".StreamService" >
+        </service>
+    </application>
+
+</manifest>

@@ -1,0 +1,206 @@
+package com.uninet.xiaoyou.net;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.Socket;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.net.UnknownHostException;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import com.uninet.xiaoyou.FunctionSelectionActivity;
+import com.uninet.xiaoyou.ShowProgressDialog;
+import com.uninet.xiaoyou.Utility;
+
+import android.content.Context;
+import android.content.Intent;
+import android.util.Log;
+
+/**
+ * 登录/注册线程
+ * 
+ * @author chenggong
+ * 
+ */
+public class LoginRegisterSocketThread extends Thread {
+
+	Context mContext;
+	String username, password;
+	int router_id = -1/* , identifying_code */;
+
+	// 发起的请求的类型
+	int request_code;
+
+	Socket socket;
+	DataOutputStream out;
+	DataInputStream in;
+	HttpURLConnection conn;
+
+	String validateURL;
+	private boolean isNetError;
+	private boolean loginState;
+
+	/**
+	 * 构造方法 备用
+	 * 
+	 * @param _context
+	 */
+	public LoginRegisterSocketThread(Context _context) {
+
+	}
+
+	/**
+	 * 构造方法 登录用
+	 * 
+	 * @param _context
+	 * @param _username
+	 * @param _password
+	 */
+	public LoginRegisterSocketThread(Context _context, String _username,
+			String _password, int request) {
+		mContext = _context;
+		username = _username;
+		password = _password;
+		// 登录
+		request_code = request;
+	}
+
+	/**
+	 * 构造方法 注册用
+	 * 
+	 * @param _context
+	 * @param _username
+	 * @param _password
+	 * @param _router_id
+	 */
+	// public LoginRegisterSocketThread(Context _context, String _username,
+	// String _password, int _router_id/* , String _identifying_code */) {
+	// mContext = _context;
+	// username = _username;
+	// password = _password;
+	// router_id = _router_id;
+	// // identifying_code = _identifying_code;
+	// // 注册
+	// request_code = Utility.register;
+	// }
+
+	/**
+	 * 向服务器发送数据
+	 * 
+	 * @return
+	 */
+	public boolean sendMessage() {
+		// try {
+		// // 打包数据
+		// PackJSONMessage pm = new PackJSONMessage();
+		// JSONObject pack = pm.packmessage(mContext, username, password,
+		// router_id, request_code);
+		//
+		// // 建立socket
+		// socket = new Socket(Utility.server_addr, Utility.server_port);
+		// out = new DataOutputStream(socket.getOutputStream());
+		// // 连接服务器，判断socket状态
+		// if (socket.isConnected() && !socket.isClosed()) {
+		// if (Utility.logable)
+		// Log.d(Utility.TAG, "connected");
+		// if (!socket.isOutputShutdown()) {
+		// out.writeUTF("" + pack);
+		// if (Utility.logable)
+		// Log.d(Utility.TAG, "msg : " + pack);
+		// }
+		// }
+		// out.flush();
+		// out.close();
+		// } catch (UnknownHostException e) {
+		// e.printStackTrace();
+		// } catch (IOException e) {
+		// e.printStackTrace();
+		// }
+
+		URL url;
+		try {
+			url = new URL(validateURL);
+			if(Utility.logable) Log.d(Utility.TAG, "url = " + url.toString());
+			conn = (HttpURLConnection) url.openConnection();
+			conn.setConnectTimeout(5000);
+			conn.setRequestMethod("GET");
+			conn.connect();
+			in = new DataInputStream(conn.getInputStream());
+			if (Utility.logable)
+				Log.d(Utility.TAG, "ResponseCode = " + conn.getResponseCode());
+			if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
+				Log.d(this.toString(),
+						"getResponseCode() not HttpURLConnection.HTTP_OK");
+				isNetError = true;
+				return false;
+			}
+			// 读取服务器的登录状态码
+			int loginStateInt = in.readInt();
+			if (loginStateInt > 0) {
+				loginState = true;
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			isNetError = true;
+		} finally {
+			if (conn != null) {
+				conn.disconnect();
+			}
+		}
+
+		return loginState;
+
+	}
+
+	/**
+	 * 监听端口，等待服务器返回数据
+	 */
+	// private boolean waitforResult() {
+	// try {
+	// in = new DataInputStream(socket.getInputStream());
+	// if (in.available() != 0) {
+	// ParseJSONMessage pm = new ParseJSONMessage(in);
+	// String login = pm.getJSONValue("login_resault");
+	// return login.equals("true");
+	// }
+	// } catch (IOException e) {
+	// e.printStackTrace();
+	// } catch (JSONException e) {
+	// e.printStackTrace();
+	// }
+	// return false;
+	// }
+
+	/**
+	 * 线程运行
+	 */
+	public void run() {
+		validateURL = "http://192.168.0.129:8090/test/registCl.jsp?username="
+				+ username + "&password=" + password;
+
+		// 向服务器发送数据
+		// 等待服务器响应
+		while (true) {
+			// if (waitforResult()) {
+			//if (sendMessage()) {
+				mContext.startActivity(new Intent(mContext,
+						FunctionSelectionActivity.class));
+				ShowProgressDialog.dismiss();
+				break;
+			//}
+		}
+	}
+
+}

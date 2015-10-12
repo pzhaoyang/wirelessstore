@@ -1,0 +1,121 @@
+package com.uninet.xiaoyou.net;
+
+import java.io.IOException;
+import java.io.InputStream;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import android.os.Parcel;
+import android.os.Parcelable;
+import android.util.Log;
+
+import com.uninet.xiaoyou.Utility;
+
+/**
+ * 解析JSON数据包工具类
+ * 
+ * @author chenggong
+ * 
+ */
+public class ParseJSONMessage implements Parcelable{
+
+	private JSONObject jsonObject;
+
+	public static final Parcelable.Creator<ParseJSONMessage> CREATOR = new Creator<ParseJSONMessage>() { 
+        @Override 
+        public ParseJSONMessage createFromParcel(Parcel source) {  
+            String str = source.readString();
+            ParseJSONMessage pjson = new ParseJSONMessage(str);
+            return pjson; 
+        }
+ 
+        @Override
+        public ParseJSONMessage[] newArray(int size) {
+            return new ParseJSONMessage[size];
+        } 
+    };
+    
+	/**
+	 * 构造方法
+	 * 
+	 * @param _in
+	 */
+	public ParseJSONMessage(InputStream in) {
+		if (Utility.logable)
+			Log.d(Utility.TAG, "ParseJSONMessage");
+		parse(in);
+	}
+	
+	ParseJSONMessage(String str){
+		try {
+			jsonObject = new JSONObject(str);
+		} catch (JSONException e) {
+			android.util.Log.d("abc","ParseJSONMessage error : " + e);
+		}
+	}
+	
+	private void parse(InputStream in) {
+		try {
+			if (Utility.logable)
+				Log.d(Utility.TAG, "try");
+			int count = in.available();
+			byte[] b = new byte[count];
+			in.read(b);
+			String str = new String(b);
+			if (Utility.logable)
+				Log.d(Utility.TAG, "str = " + str);
+			Log.d("abc","prase str = " + str);
+			jsonObject = new JSONObject(str);
+			in.close();
+
+			if (Utility.logable)
+				Log.d(Utility.TAG, "jsonObject : " + jsonObject);
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (JSONException e) {
+			int size;
+			try {
+				size = in.available();
+				byte[] buffer = new byte[size];
+				 in.read(buffer);
+				Log.d(Utility.TAG, "" +new String(buffer));
+				Log.d("abc","jsonexception = " + new String(buffer));
+			} catch (IOException e2) {
+				e2.printStackTrace();
+			}
+			
+			Log.d(Utility.TAG,"not json");
+		}
+	}
+
+	public String getJSONValue(String key){
+		if(jsonObject == null) return null;
+		try {
+			if(jsonObject.has(key)){
+				return jsonObject.getString(key);
+			}
+		} catch (JSONException e) {
+			Log.e("abc","getJSONValue error: " + e);
+		}
+		return null;		
+	}
+	
+	public JSONObject getJSONObject(){
+		return jsonObject;
+	}
+
+	@Override
+	public int describeContents() {
+		return 0;
+	}
+
+	@Override
+	public void writeToParcel(Parcel dest, int flag) {
+		 dest.writeString(jsonObject.toString());
+	}
+	
+    public String toString() {
+        return jsonObject.toString();
+    }
+}

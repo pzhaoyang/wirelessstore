@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@drawable/bg"
+    android:orientation="vertical" >
+ 
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:gravity="center"
+        android:orientation="horizontal" >
+
+        <Button
+            android:id="@+id/tv_extend1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/extend"
+     android:background="@drawable/btn_normal"
+            android:textColor="@color/btntextcolor" />
+
+        <Button
+            android:id="@+id/tv_extend2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/extend"
+            android:background="@drawable/btn_normal"
+            android:textColor="@color/btntextcolor" />
+
+        <Button
+            android:id="@+id/tv_extend3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/extend"
+         android:background="@drawable/btn_normal"
+            android:textColor="@color/btntextcolor" />
+
+        <Button
+            android:id="@+id/tv_extend4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/btntextcolor"
+            android:background="@drawable/btn_normal"
+            android:text="@string/extend" />    
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal" >
+
+        <Button
+            android:id="@+id/tv_extend5"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/extend"
+            android:background="@drawable/btn_normal"
+            android:textColor="@color/btntextcolor" />
+
+        <Button
+            android:id="@+id/tv_extend6"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/extend"
+            android:background="@drawable/btn_normal"
+            android:textColor="@color/btntextcolor" />
+
+        <Button
+            android:id="@+id/tv_extend7"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/extend"
+            android:background="@drawable/btn_normal"
+            android:textColor="@color/btntextcolor" />
+
+        <Button
+            android:id="@+id/tv_extend8"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/extend"
+            android:background="@drawable/btn_normal"
+            android:textColor="@color/btntextcolor" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal" >
+
+        <Button
+            android:id="@+id/tv_extend9"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/extend"
+            android:background="@drawable/btn_normal"
+            android:textColor="@color/btntextcolor" />
+
+        <Button
+            android:id="@+id/tv_extend10"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/extend"
+            android:background="@drawable/btn_normal"
+            android:textColor="@color/btntextcolor" />
+
+        <Button
+            android:id="@+id/tv_extend11"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/extend"
+            android:background="@drawable/btn_normal"
+            android:textColor="@color/btntextcolor" />
+
+        <Button
+            android:id="@+id/tv_extend12"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/extend"
+            android:background="@drawable/btn_normal"
+            android:textColor="@color/btntextcolor" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal" >
+
+        <Button
+            android:id="@+id/tv_extend13"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/extend"
+            android:background="@drawable/btn_normal"
+            android:textColor="@color/btntextcolor" />
+
+        <Button
+            android:id="@+id/tv_extend14"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/extend"
+            android:background="@drawable/btn_normal"
+            android:textColor="@color/btntextcolor" />
+
+        <Button
+            android:id="@+id/tv_extend15"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/extend"
+            android:background="@drawable/btn_normal"
+            android:textColor="@color/btntextcolor" />
+
+        <Button
+            android:id="@+id/tv_extend16"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/extend"
+            android:background="@drawable/btn_normal"
+            android:textColor="@color/btntextcolor" />
+    </LinearLayout>
+
+
+
+   
+
+</LinearLayout>

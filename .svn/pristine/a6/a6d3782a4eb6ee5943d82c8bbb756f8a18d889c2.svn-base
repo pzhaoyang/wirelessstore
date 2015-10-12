@@ -1,0 +1,150 @@
+package com.uninet.xiaoyou.net;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+
+public class GetFromRemote {
+	/**
+	 * 与路由交互部分
+	 */
+
+	/**
+	 * 登陆
+	 */
+	static void login() {
+		DataInteractionThread.path = "/app/login";
+		DataInteractionThread.isWithAuthorization = true;
+		DataInteractionThread.ispost = false;
+	}
+
+	/**
+	 * 获取百度云设置
+	 */
+	static void getBaiduCloud() {
+		DataInteractionThread.path = "/app/getBaiduCloud";
+		DataInteractionThread.isWithAuthorization = true;
+		DataInteractionThread.ispost = false;
+	}
+
+	/**
+	 * 获取USB模式
+	 */
+	static void getUsbmode() {
+		DataInteractionThread.path = "/app/getUsbmode";
+		DataInteractionThread.isWithAuthorization = true;
+		DataInteractionThread.ispost = false;
+	}
+
+	/**
+	 * 获取ssid信息
+	 */
+	static void getSsid() {
+		DataInteractionThread.path = "/app/getSsid";
+		DataInteractionThread.isWithAuthorization = true;
+		DataInteractionThread.ispost = false;
+	}
+
+	/**
+	 * 获取wifi穿墙模式
+	 */
+	static void getWifipower() {
+		DataInteractionThread.path = "/app/getWifipower";
+		DataInteractionThread.isWithAuthorization = true;
+		DataInteractionThread.ispost = false;
+	}
+
+	/**
+	 * 获取wifi工作模式
+	 */
+	static void getWifimode() {
+		DataInteractionThread.path = "/app/getWifimode";
+		DataInteractionThread.isWithAuthorization = true;
+		DataInteractionThread.ispost = false;
+	}
+
+	/**
+	 * 获取版本信息
+	 */
+	static void getDeviceVersion() {
+		DataInteractionThread.path = "/app/getVersion";
+		DataInteractionThread.isWithAuthorization = true;
+		DataInteractionThread.ispost = false;
+	}
+
+	/**
+	 * 获取项目信息
+	 */
+	static void getProduct() {
+		DataInteractionThread.path = "/app/getProduct";
+		DataInteractionThread.isWithAuthorization = true;
+		DataInteractionThread.ispost = false;
+	}
+
+	/**
+	 * 获取路由信息
+	 */
+	static void getRouterInfo() {
+		DataInteractionThread.path = "/app/getRouterInfo";
+		DataInteractionThread.isWithAuthorization = true;
+		DataInteractionThread.ispost = false;
+	}
+
+	/**
+	 * 获取网关名字
+	 */
+	static void getname() {
+		DataInteractionThread.path = "/info/name";
+		DataInteractionThread.isWithAuthorization = false;
+		DataInteractionThread.ispost = false;
+	}
+
+	/**
+	 * 获取网关MAC
+	 */
+	static void getmac() {
+		DataInteractionThread.path = "/info/mac";
+		DataInteractionThread.isWithAuthorization = false;
+		DataInteractionThread.ispost = false;
+	}
+
+	/**
+	 * 获取网关版本
+	 */
+	static void getversion() {
+		DataInteractionThread.path = "/info/version";
+		DataInteractionThread.isWithAuthorization = false;
+		DataInteractionThread.ispost = false;
+	}
+
+	/**
+	 * 获取网关日期
+	 */
+	static void getdate() {
+		DataInteractionThread.path = "/info/date";
+		DataInteractionThread.isWithAuthorization = false;
+		DataInteractionThread.ispost = false;
+	}
+
+	/**
+	 * 获取网关时间
+	 */
+	static void gettime() {
+		DataInteractionThread.path = "/info/mac";
+		DataInteractionThread.isWithAuthorization = false;
+		DataInteractionThread.ispost = false;
+	}
+	
+	/**
+	 * 与服务器交互部分
+	 */
+	
+	/**
+	 * 登陆服务器
+	 */
+	static void server_login() {
+		DataInteractionThread.path = "/server/login";
+		DataInteractionThread.isWithAuthorization = true;
+		DataInteractionThread.ispost = false;
+	}
+}

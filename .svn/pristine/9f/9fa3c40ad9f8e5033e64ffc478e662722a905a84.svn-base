@@ -1,0 +1,59 @@
+package com.uninet.xiaoyou.routemanager;
+
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.Intent;
+import android.os.AsyncTask;
+import android.util.Log;
+
+import com.uninet.xiaoyou.R;
+import com.uninet.xiaoyou.Utility;
+import com.uninet.xiaoyou.net.DataInteractionThread;
+
+public class MyAsyncTask extends AsyncTask<String, Void, Void> {
+	private ProgressDialog dialog = null;
+	Context mContext;
+
+	DataInteractionThread dt;
+
+	MyAsyncTask(Context context, DataInteractionThread _dt) {
+		mContext = context;
+		dt = _dt;
+	}
+
+	@Override
+	protected void onPreExecute() {
+		super.onPreExecute();
+		dialog = new ProgressDialog(mContext);
+		dialog.setMessage(mContext.getString(R.string.loading));
+		dialog.setCanceledOnTouchOutside(false);
+		dialog.setCancelable(false);
+		dialog.show();
+	}
+
+	@Override
+	protected Void doInBackground(String... arg0) {
+		dt.start();
+		Log.d(Utility.TAG,"before while result = " + dt.get_result());
+		while(dt.get_result() == "-1"){
+			Log.d(Utility.TAG,"while result = " + dt.get_result());
+			try {
+				Thread.sleep(200);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		return null;
+	}
+
+	@Override
+	protected void onPostExecute(Void result) {
+		super.onPostExecute(result);
+		Intent i = new Intent("DT_REAULT");
+		i.putExtra("result", dt.get_result());
+		dialog.cancel();
+		mContext.sendBroadcast(i);
+	}
+
+}

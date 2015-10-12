@@ -1,0 +1,62 @@
+package com.uninet.xiaoyou;
+
+import com.uninet.xiaoyou.devicemanager.DeviceManagerActivity;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+
+/**
+ * 登录成功之后，进入功能选择界面
+ * 
+ * @author chenggong
+ * 
+ *************************************************** 
+ *         版本 v1.0 2014-08-18
+ *************************************************** 
+ *         可选功能 1、文件管理 2、百度云盘设置 3、设备管理
+ *************************************************** 
+ */
+public class FunctionSelectionActivity extends Activity implements
+		OnClickListener {
+
+	Button wireless_stroage, baiduyunpan, device_manager;
+
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_functionselection);
+
+		wireless_stroage = (Button) findViewById(R.id.wireless_stroage);
+		baiduyunpan = (Button) findViewById(R.id.baiduyunpan);
+		device_manager = (Button) findViewById(R.id.device_manager);
+
+		wireless_stroage.setOnClickListener(this);
+		baiduyunpan.setOnClickListener(this);
+		device_manager.setOnClickListener(this);
+	}
+
+	@Override
+	public void onClick(View v) {
+		switch (v.getId()) {
+		case R.id.wireless_stroage:
+			// TODO open wireless_stroage
+			this.startActivity(new Intent(this, com.uninet.xiaoyou.wirelessstore.WirelesstoreActivity.class));
+			break;
+		case R.id.baiduyunpan:
+			// TODO open baiduyunpan
+			//this.startActivity(new Intent(this, XiaoYouActivity.class));
+			break;
+		case R.id.device_manager:
+			// TODO open device_manager
+			this.startActivity(new Intent(this, DeviceManagerActivity.class));
+			break;
+		default:
+			break;
+		}
+
+	}
+
+}

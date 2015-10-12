@@ -1,0 +1,47 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/RelativeLayout1"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="${packageName}.${activityClass}" >
+
+    <LinearLayout
+        android:id="@+id/linearLayout1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" 
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/bak_view"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:gravity="center_vertical"
+            android:ellipsize="marquee"
+            android:hint="@string/backup_path"
+            android:textSize="16sp" />
+
+        <Button
+            android:id="@+id/pick_dir_bt"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:text="@string/choice_bak_dir"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/linearLayout2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@+id/linearLayout1" >
+
+        <CheckBox
+            android:id="@+id/delete_ckbox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/del_native" />
+    </LinearLayout>
+
+</RelativeLayout>

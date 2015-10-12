@@ -1,0 +1,21 @@
+package com.uninet.xiaoyou.wirelessstore;
+
+import android.os.Message;
+
+public class Init {
+	public static TaskHandler th = TaskHandler.GetTaskHandler();
+	static final Message MsgElement(int what, Object obj, int arg1){
+		Message msg  = new Message();
+		msg.what = what;
+		msg.obj = obj;
+		msg.arg1 = arg1;
+		return msg;
+	}
+	
+	static final Message MsgElement(int what, Object obj){
+		Message msg  = new Message();
+		msg.what = what;
+		msg.obj = obj;
+		return msg;
+	}	
+}

@@ -1,0 +1,45 @@
+package com.uninet.xiaoyou.devicemanager;
+
+import java.util.ArrayList;
+
+import android.app.Activity;
+import android.app.Fragment;
+import android.os.Bundle;
+
+import com.uninet.xiaoyou.R;
+
+/**
+ * 查看设备信息
+ * 
+ * @author chenggong
+ * 
+ */
+public class DeviceManagerActivity extends Activity {
+
+	static ArrayList<String> title = new ArrayList<String>();
+	static ArrayList<String> info = new ArrayList<String>();
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		this.setContentView(R.layout.activity_devicemanager);
+		this.setTitle(R.string.device_manager);
+
+		title.add("0");
+		title.add("1");
+
+		info.add("info 0");
+		info.add("info 1");
+	}
+
+	public class titles {
+		static final int network_info = 0;
+		static final int through_wall_settings = 1;
+		static final int switch_work_mode = 2;
+		static final int wireless_settings = 3;
+		static final int user_management = 4;
+		static final int soft_version = 5;
+		static final int firmware_upgrade = 6;
+		
+	}
+}

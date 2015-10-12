@@ -1,0 +1,84 @@
+package com.uninet.xiaoyou.wirelessstore;
+
+import com.uninet.xiaoyou.*;
+
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.TextView;
+
+public class WirelessSettingActivity extends Activity {
+	
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.wireless_setting_activity);
+		
+		TextView tv = (TextView)findViewById(R.id.bak_view);
+		tv.setText(this.getSharedPreferences("smburlinfo", 0).getString("bak_path",""));
+		
+		Button bt_sl = (Button)findViewById(R.id.pick_dir_bt);
+		bt_sl.setOnClickListener( new OnClickListener() {
+			
+			@Override
+			public void onClick(View arg0) {
+				showdialog();
+			}
+		});
+		
+		CheckBox cb = (CheckBox) findViewById(R.id.delete_ckbox);
+		cb.setChecked(this.getSharedPreferences("smburlinfo", 0).getBoolean("delete_file", false));
+		cb.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+			
+			@Override
+			public void onCheckedChanged(CompoundButton arg0, boolean arg1) {
+					SharedPreferences sp = WirelessSettingActivity.this.getSharedPreferences("smburlinfo",0);
+					Editor ed = sp.edit();
+					ed.putBoolean("delete_file", arg1);
+					ed.commit();				
+			}
+		});
+	}
+	
+	private void showdialog(){
+		View view = BrowsLocalFileTask.SetDialogListAdapter(WirelessSettingActivity.this);
+		GeneralUtil.is_pick_file = false;
+		new BrowsLocalFileTask("/storage");
+		new AlertDialog
+		.Builder(WirelessSettingActivity.this)
+		.setTitle(R.string.choice_bak_dir)
+		.setView(view)
+		.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+			
+			@Override
+			public void onClick(DialogInterface arg0, int arg1) {
+				TextView tv = (TextView)findViewById(R.id.bak_view);
+				tv.setText(BrowsLocalFileTask.getNativeCurrPath());
+				SharedPreferences sp = WirelessSettingActivity.this.getSharedPreferences("smburlinfo",0);
+				Editor ed = sp.edit();
+				ed.putString("bak_path", BrowsLocalFileTask.getNativeCurrPath());
+				ed.commit();
+				GeneralUtil.is_pick_file = true;
+				Log.d("abc","picked path = " + BrowsLocalFileTask.getNativeCurrPath());
+			}
+		})
+		.setNegativeButton(getString(android.R.string.cancel), new DialogInterface.OnClickListener() {
+			
+			@Override
+			public void onClick(DialogInterface arg0, int arg1) {
+				GeneralUtil.is_pick_file = true;
+			}
+		})
+		.show();
+	}
+}

@@ -1,0 +1,36 @@
+package com.uninet.xiaoyou;
+
+/**
+ * 全局工具类
+ * 
+ * @author chenggong
+ * 
+ */
+public final class Utility {
+
+	// 全局log开关
+	static public final boolean logable = true;
+	static public final String TAG = "cgcgcg";
+
+	// 主服务器地址
+	static public final String server_addr = "192.168.0.111";
+	// 主服务器端口
+	static public final int server_port = 8090;
+
+	// 注册
+	static public final int register = 0;
+	// 登录
+	static public final int login = 1;
+	// 修改密码
+	static public final int update_pword = 2;
+
+	static public final int network_info = 3;
+	static public final int through_wall_settings = 4;
+	static public final int switch_work_mode = 5;
+	static public final int wireless_settings = 6;
+	static public final int user_management = 7;
+	static public final int soft_version = 8;
+	static public final int firmware_upgrade = 9;
+	static public final int set_through_wall_mode = 10;
+
+}

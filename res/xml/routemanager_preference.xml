@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+    
+    <Preference
+        android:key="wireless_settings"
+        android:title="@string/wireless_settings" >
+        <intent android:action="android.intent.action.VIEW"
+            android:targetPackage="com.uninet.xiaoyou" android:targetClass="com.uninet.xiaoyou.routemanager.WirelessSettingsActivity" />
+    </Preference>
+
+    <CheckBoxPreference
+        android:key="CheckBoxPreference"
+        android:summaryOff="@string/charging"
+        android:summaryOn="@string/udisk"
+        android:title="@string/usb_mode"
+        android:widgetLayout="@layout/usbmode_checkbox" />
+
+</PreferenceScreen>

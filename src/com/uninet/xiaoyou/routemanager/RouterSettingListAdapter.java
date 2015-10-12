@@ -1,0 +1,88 @@
+package com.uninet.xiaoyou.routemanager;
+
+import com.uninet.xiaoyou.*;
+import android.content.Context;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+
+
+
+
+
+import java.util.ArrayList;
+import java.util.List;
+
+
+public class RouterSettingListAdapter extends BaseAdapter {
+
+	private LayoutInflater mInflater;
+	private List<RouteItem> mItems = new ArrayList<RouteItem>();
+	
+	public RouterSettingListAdapter(Context context) {
+		mInflater = LayoutInflater.from(context);
+	}
+    
+	public void addItem(RouteItem it) {
+		mItems.add(it);
+	}
+	
+	private class ViewHolder {
+		private ImageView mIcon;
+		private TextView mText;
+		private TextView mInfo;
+	}
+	
+	@Override
+	public int getCount() {
+		return mItems.size();
+	}
+
+	@Override
+	public Object getItem(int position) {
+		 return mItems.get(position);
+	}
+
+	@Override
+	public long getItemId(int position) {
+		return position;
+	}
+	
+	public void setListItems(List<RouteItem> lit) {
+		mItems = lit;
+	}
+	
+	@Override
+	public View getView(int position, View convertView, ViewGroup parent) {
+		ViewHolder viewholder;
+		RouteItem item = mItems.get(position);
+		if (convertView == null) {
+			convertView = mInflater.inflate(R.layout.routesetting_list_item, null);
+			viewholder = new ViewHolder();
+
+			viewholder.mIcon = (ImageView) convertView.findViewById(R.id.ItemImage);
+			viewholder.mText = (TextView) convertView.findViewById(R.id.ItemTitle);
+			viewholder.mInfo = (TextView) convertView.findViewById(R.id.Iteminfo);
+
+
+			convertView.setTag(viewholder);
+      } else {
+    	  viewholder = (ViewHolder) convertView.getTag();
+      }
+	  viewholder.mIcon.setImageDrawable(item.getIcon());
+      viewholder.mText.setText(item.getText());
+      
+      if("".equals(item.getInfo())){
+    	  viewholder.mInfo.setVisibility(View.GONE);
+      }else{
+    	  viewholder.mInfo.setVisibility(View.VISIBLE);
+    	  viewholder.mInfo.setText(item.getInfo());
+      }
+      
+      return convertView;
+	}
+}

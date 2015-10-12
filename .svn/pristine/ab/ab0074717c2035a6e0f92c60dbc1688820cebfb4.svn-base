@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="transparent">#000000</color>  
+     <color name="colorSend">#00303030</color>  
+     <color name="colorButton">#30000000</color>  
+     <color name="btntextcolor">#000000</color>  
+     <color name="colorbk">#ccffff</color>  
+     <color name="infotextcolor">#ffffff</color>  
+     <color name="colorindex">#ff9966</color>
+     <color name="listview_background">#ffdfdfdf</color>
+	 <color name="text_light">#ff535354</color>
+    <color name="color_black">#000000</color>
+    <color name="color_white">#FFFFFF</color>
+    <color name="color_gray">#736F6E</color>
+    <color name="color_blue_sky">#5e7d87</color>
+    <color name="color_gray_light">#99C9C9C9</color>
+    <color name="color_black_light">#99000000</color>
+    	<!-- LIST BORDER COLOR -->
+	<color name="rounded_container_border">#ffb7babb</color>
+
+	<!-- ITEM BACKGROUND COLOR - STATE - DEFAULT -->
+	<color name="base_start_color_default">#FFFFFF</color>
+    <color name="base_end_color_default">#FFFFFF</color>
+    	
+	<!-- ITEM BACKGROUND COLOR - STATE - PRESSED -->
+	<color name="base_start_color_pressed">#ff3590c4</color>
+    <color name="base_end_color_pressed">#ff2570ba</color>
+    
+    <!-- ITEM TEXT COLORS - STATES - PRESSED AND DEFAULT -->
+    <color name="text_color_default">#000000</color>
+    <color name="text_color_pressed">#ffffff</color>
+     <!-- DROPDOWN -->
+     <color name="dropdown_list_background_green">#ececec</color>
+    <color name="dropdown_list_divider_blue">#ffffff</color>
+    
+    <color name="main_background">#c2d598</color>
+    <color name="login_textcolor">#4d4a49</color>
+    
+</resources>

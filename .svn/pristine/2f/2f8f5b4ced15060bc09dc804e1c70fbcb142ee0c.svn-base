@@ -1,0 +1,134 @@
+package com.uninet.xiaoyou;
+
+import java.io.IOException;
+import java.util.ArrayList;
+
+import com.uninet.xiaoyou.net.DataInteractionThread;
+import com.uninet.xiaoyou.remotecontrol.data.AirData;
+import com.uninet.xiaoyou.remotecontrol.ircomm.RemoteComm;
+import com.uninet.xiaoyou.remotecontrol.utils.RemoteDB;
+import com.uninet.xiaoyou.remotecontrol.utils.Tools;
+
+import android.app.Activity;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.TextView;
+
+public class remote extends Activity implements OnClickListener {
+
+	Button pair, query, open, close, air_open, air_tem_up, air_tem_down;
+	static TextView pair_result;
+	TextView query_result;
+
+	static SharedPreferences sp;
+	static Editor editor;
+
+	static String pair_id;
+
+	private RemoteDB mRmtDB;
+	
+	AirData air = new AirData();
+	
+	private static final String libSoName = "ETEKIRCore";
+	static {  
+        System.loadLibrary(libSoName);  
+    }  
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_remote);
+
+		pair = (Button) findViewById(R.id.pair);
+		query = (Button) findViewById(R.id.query);
+		open = (Button) findViewById(R.id.open);
+		close = (Button) findViewById(R.id.close);
+		air_open = (Button) findViewById(R.id.air_open);
+		air_tem_up = (Button) findViewById(R.id.air_tem_up);
+		air_tem_down = (Button) findViewById(R.id.air_tem_down);
+
+		pair_result = (TextView) findViewById(R.id.pair_result);
+		query_result = (TextView) findViewById(R.id.query_result);
+
+		pair.setOnClickListener(this);
+		query.setOnClickListener(this);
+		open.setOnClickListener(this);
+		close.setOnClickListener(this);
+		air_open.setOnClickListener(this);
+		air_tem_up.setOnClickListener(this);
+		air_tem_down.setOnClickListener(this);
+		
+		mRmtDB = new RemoteDB(getApplicationContext());
+
+	}
+
+	@Override
+	public void onClick(View v) {
+		switch (v.getId()) {
+		case R.id.pair:
+			DataInteractionThread dt = new DataInteractionThread(remote.this,
+					Utility.device_pair, false);
+			dt.run();
+			break;
+		case R.id.air_open:
+			
+			new Thread() {
+				public void run() {
+					air.setMkey(0);
+					
+					try {
+						mRmtDB.createDataBase();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					mRmtDB.open();
+					ArrayList<String> brand_list = mRmtDB.getBrand("AIR");
+
+					for (int i = 0; i < brand_list.size(); i++) {
+						ArrayList<String> proudcts_list = mRmtDB
+								.getProductsIndex("AIR", brand_list.get(i));
+
+						for (int j = 0; j < proudcts_list.size(); j++) {
+							//Log.d(Utility.TAG, "proudcts_list[" + j + "] = " + proudcts_list.get(j));
+							air.setCodeType(Integer.parseInt(proudcts_list.get(j)));
+						}
+					}
+
+					
+				}
+			}.start();
+			
+			DataInteractionThread dt2 = new DataInteractionThread(remote.this,
+					Utility.device_control, false);
+
+			byte[] sendData = new byte[129];
+			int[] tempData = Tools.airDataToArray(air);
+
+			byte[] toData = getAirData(tempData);
+
+
+			int length = toData.length+1;
+//			Log.v(TAG, "air data  -->"+Tools.bytesToHexString(toData));
+			sendData[0] = 	0x53;
+			System.arraycopy(toData, 0, sendData, 1, toData.length);
+			Log.d(Utility.TAG, "sendData : " + new String(sendData));
+//			dt2.set_remote_value(pair_id, new String(sendData));
+//			dt2.run();
+			break;
+		}
+
+	}
+
+	public static void setPairResult(String id) {
+		pair_result.setText(id);
+		pair_id = id;
+	}
+
+	public native static byte[]  getAirData (int[] data1);
+}

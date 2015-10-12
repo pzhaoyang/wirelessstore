@@ -1,0 +1,23 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/RelativeLayout1"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="${packageName}.${activityClass}" >
+	<LinearLayout 
+	    android:layout_width="fill_parent"
+	    android:layout_height="45dp">
+    	<TextView
+	        android:id="@+id/bak_view"
+	        android:layout_width="200dp"
+	        android:layout_height="fill_parent"
+	        android:hint="backup path."/>
+		<Button
+	        android:id="@+id/pick_dir_bt"
+	        android:layout_width="fill_parent"
+	        android:layout_height="fill_parent"
+	        android:text="选择目录"
+	        android:textStyle="bold" />
+		</LinearLayout>
+</RelativeLayout>

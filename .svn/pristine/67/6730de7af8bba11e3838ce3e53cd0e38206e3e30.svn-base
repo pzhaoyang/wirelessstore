@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.uninet.xiaoyou"
+    android:versionCode="1"
+    android:versionName="1.1.3" >
+
+    <uses-sdk
+        android:minSdkVersion="14"
+        android:targetSdkVersion="19" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name" >
+
+        <!-- 入口 -->
+        <activity
+            android:name="com.uninet.xiaoyou.XiaoYouActivity"
+            android:label="@string/app_name" 
+            android:theme="@android:style/Theme.NoTitleBar"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <!-- 注册 -->
+        <activity
+            android:name="RegisterActivity"
+            android:label="@string/register"
+            android:screenOrientation="portrait" >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="com.unipro.remotecontrol.RegisterActivity" />
+            </intent-filter>
+        </activity>
+        <!-- 功能选择 -->
+        <activity
+            android:name="FunctionSelectionActivity"
+            android:label="@string/function_election"
+            android:screenOrientation="portrait" >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+            </intent-filter>
+        </activity>
+        <!-- 设备管理 -->
+        <activity
+            android:name="com.uninet.xiaoyou.routemanager.RouteManagerActivity"
+            android:label="@string/route_manager"
+            android:screenOrientation="portrait" >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+            </intent-filter>
+        </activity>
+        <!-- 网络信息 -->
+        <activity
+            android:name="com.uninet.xiaoyou.routemanager.ShowListActivity"
+            android:label="@string/network_info"
+            android:screenOrientation="portrait" >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="com.uninet.xiaoyou.routemanager.NetWorkSettingsActivity"
+            android:label="@string/network_settings"
+            android:screenOrientation="portrait" >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="com.uninet.xiaoyou.routemanager.WirelessSettingsActivity"
+            android:label="@string/wireless_settings"
+            android:screenOrientation="portrait" >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+            </intent-filter>
+        </activity>
+
+        <!-- 无线存储 -->
+        <activity
+            android:name="com.uninet.xiaoyou.wirelessstore.WirelesstoreActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.uninet.xiaoyou.wirelessstore.SmbListActivity"
+            android:label="@string/title_activity_list"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.uninet.xiaoyou.wirelessstore.WirelessSettingActivity"
+            android:label="@string/title_activity_wireless_setting"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.uninet.wirelessstore.WirelessSettingActivity"
+            android:label="@string/title_activity_wireless_setting"
+            android:screenOrientation="portrait" >
+        </activity>
+
+        <service android:name=".wirelessstore.StreamService" >
+        </service>
+
+        <!-- 遥控器 -->
+        <activity
+            android:name="com.uninet.xiaoyou.remotecontrol.remote.StartActivity"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="com.uninet.xiaoyou.remotecontrol.remote.FirstActivity"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.uninet.xiaoyou.remotecontrol.remote.STBActivity"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.uninet.xiaoyou.remotecontrol.remote.TVActivity"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.uninet.xiaoyou.remotecontrol.remote.DVDActivity"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.uninet.xiaoyou.remotecontrol.remote.FanActivity"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.uninet.xiaoyou.remotecontrol.remote.PJTActivity"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.uninet.xiaoyou.remotecontrol.remote.LightActivity"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.uninet.xiaoyou.remotecontrol.remote.AirActivity"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.uninet.xiaoyou.remotecontrol.remote.DeviceActivity"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.uninet.xiaoyou.remotecontrol.remote.RemoteListActivity"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.uninet.xiaoyou.remotecontrol.remote.StudyActivity"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.uninet.xiaoyou.remotecontrol.remote.MainActivity"
+            android:label="@string/title_activity_main"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.uninet.xiaoyou.remotecontrol.remote.CodeTestActivity"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.uninet.xiaoyou.remotecontrol.remote.BrandListActivity"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustPan" >
+        </activity>
+        <activity
+            android:name="com.uninet.xiaoyou.remotecontrol.remote.TestActivity"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.uninet.xiaoyou.remotecontrol.remote.TestAirActivity"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.uninet.xiaoyou.remotecontrol.remote.CameraActivity"
+            android:screenOrientation="portrait" >
+        </activity>
+    </application>
+
+</manifest>
